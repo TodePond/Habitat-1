@@ -32,7 +32,7 @@ Reflect.defineProperty(Set.prototype, "first", {
 	}
 })
 
-Reflect.defineProperty(Set.prototype, "first", {
+Reflect.defineProperty(Set.prototype, "last", {
 	get() {
 		return this.values().last
 	}

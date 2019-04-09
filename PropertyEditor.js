@@ -8,16 +8,18 @@
 		value: undefined,
 		get: (self, propertyName) => self._[propertyName].value,
 		set: (v, self, propertyName) => self._[propertyName].value = v,
+		type: undefined,
 		writable: true,
 		enumerable: true,
 		configurable: true,
 		typeCheck: o=> true,
 	}
 	
-	const DEFAULT_EDITOR = {
+	const BLANK_DESCRIPTOR = {
 		value: undefined,
 		get: undefined,
 		set: undefined,
+		type: undefined,
 		writable: undefined,
 		enumerable: undefined,
 		configurable: true,
@@ -69,7 +71,7 @@
 			this.propertyName = propertyName
 			this.createCache()
 			
-			const descriptor = Reflect.getOwnPropertyDescriptor(object, propertyName) || DEFAULT_EDITOR
+			const descriptor = Reflect.getOwnPropertyDescriptor(object, propertyName) || BLANK_DESCRIPTOR
 			if (!descriptor.configurable) throw new Error (`[PropertyEditor] Couldn't edit property "${propertyName}" because it is not configurable.`)
 			
 			this.readDescriptor(descriptor)
@@ -82,10 +84,11 @@
 			this.checkType()
 		}
 		
-		readDescriptor({value, get, set, writable, enumerable, configurable, typeCheck}) {
+		readDescriptor({value, get, set, type, writable, enumerable, configurable, typeCheck}) {
 			this._value = value
 			this._get = get
 			this._set = set
+			this._type = type
 			this._writable = writable
 			this._enumerable = enumerable
 			this._configurable = configurable
@@ -98,6 +101,7 @@
 			let get   = this._get
 			let set   = this._set
 			let value = this._value
+			let type  = this._type
 			let writable     = this._writable
 			let enumerable   = this._enumerable
 			let configurable = this._configurable
@@ -106,15 +110,17 @@
 			if (get   == undefined) get   = DEFAULT_DESCRIPTOR.get
 			if (set   == undefined) set   = DEFAULT_DESCRIPTOR.set
 			if (value == undefined) value = DEFAULT_DESCRIPTOR.value
+			if (type  == undefined) type  = DEFAULT_DESCRIPTOR.type
 			if (writable     == undefined) writable     = DEFAULT_DESCRIPTOR.writable
 			if (enumerable   == undefined) enumerable   = DEFAULT_DESCRIPTOR.enumerable
 			if (configurable == undefined) configurable = DEFAULT_DESCRIPTOR.configurable
 			if (typeCheck    == undefined) typeCheck    = DEFAULT_DESCRIPTOR.typeCheck
 			
-			if (this._get || this._set || this._typeCheck) {
+			if (this._get || this._set || this._typeCheck || this._type) {
 				const self = this
 				descriptor.get = function() {
 					let result = get.apply(this, [this, self.propertyName])
+					if (!result.is(type)) throw new TypeError (`Property "${self.propertyName}" failed custom type check.`)
 					if (!typeCheck(result)) throw new TypeError (`Property "${self.propertyName}" failed custom type check.`)
 					return result
 				}
@@ -125,12 +131,12 @@
 				}
 			}
 			else {
-				descriptor.value    = this._value
-				descriptor.writable = this._writable
+				descriptor.value    = value
+				descriptor.writable = writable
 			}
 			
-			descriptor.enumerable   = this._enumerable
-			descriptor.configurable = this._configurable
+			descriptor.enumerable   = enumerable
+			descriptor.configurable = configurable
 			
 			return descriptor
 		}
@@ -173,6 +179,15 @@
 		
 		get value() {
 			return this._value
+		}
+		
+		set type(v) {
+			this._type = v
+			this.update()
+		}
+		
+		get type() {
+			return this._type
 		}
 		
 		set writable(v) {
