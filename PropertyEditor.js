@@ -1,5 +1,5 @@
 /*===================//
-// PropertyEditor.js //
+// PropertyDescriptor.js //
 //===================*/
 {
 
@@ -38,7 +38,7 @@
 	function forceGetEditor(object, propertyName) {
 		const cache = forceGetCache(object)
 		const editor = cache[propertyName]
-		if (editor == undefined) return new PropertyEditor(object, propertyName)
+		if (editor == undefined) return new PropertyDescriptor(object, propertyName)
 		return editor
 	}
 	
@@ -63,7 +63,7 @@
 		return getCache(object)
 	}
 
-	class PropertyEditor {
+	class PropertyDescriptor {
 	
 		constructor(object, propertyName) {
 			
@@ -209,5 +209,10 @@
 		}
 	}
 	
+	Reflect.defineProperty(Object.prototype, "has", {
+		value(propertyName) {
+			return propertyName in this
+		}
+	})
 	
 }
