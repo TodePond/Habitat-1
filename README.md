@@ -1,6 +1,9 @@
+<img align="right" height="100" src="http://todepond.com/IMG/RibbitTode.png">
+
 # Habitat
 Habitat is a collection of javascript libraries.<br>
 Here are a few of its features.
+
 
 # Properties
 Edit property definitions with the underscore (`_`) proxy.
