@@ -6,8 +6,6 @@ class Report {
 			this[propertyName] = property
 		}
 		
-		if (!this.has("success")) this.success = true
-		
 		const proxy = new Proxy(this, {
 		
 			has(report, propertyName) {
