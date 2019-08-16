@@ -20,7 +20,14 @@ Reflect.defineProperty(Array.prototype, "reversed", {
 Reflect.defineProperty(Array.prototype, "first", {
 	get() {
 		return this[0]
-	}
+	},
+})
+
+Reflect.defineProperty(Array.prototype, "pull", {
+	value(value) {
+		const index = this.indexOf(value)
+		if (index > -1) this.splice(index, 1)
+	},
 })
 
 /*=====//
