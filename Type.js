@@ -53,63 +53,49 @@ class Type {
 }
 
 const Any = new Type({
-	check(n) {
-		return true
-	},
+	check: (a) => true,
 	depth: -1,
 })
 
 const Int = new Type({
-	check: n => n % 1 == 0,
-	convert: n => parseInt(n),
+	check: (n) => n % 1 == 0,
+	convert: (n) => parseInt(n),
 })
 
 const Even = new Type({
-	check(n) {
-		return n % 2 == 0
-	}
+	check: (n) => n % 2 == 0,
 })
 
 const Odd = new Type({
-	check(n) {
-		return n % 2 != 0
-	}
+	check: (n) => n % 2 != 0,
 })
 
 const Positive = new Type({
-	check(n) {
-		return n >= 0
-	},
-	convert(n) {
-		return Math.abs(n)
-	}
+	check: (n) => n >= 0,
+	convert: (n) => Math.abs(n),
 })
 
 const UInt = Int.and(Positive)
 
 const UpperCase = new Type({
-	check(s) {
-		return s == s.as(UpperCase)
-	},
-	convert(s) {
-		return s.toUpperCase()
-	}
+	check: (s) => s == s.as(UpperCase),
+	convert: (s) => s.toUpperCase(),
 })
 
 const LowerCase = new Type({
-	check(s) {
-		return s == s.as(LowerCase)
-	},
-	convert(s) {
-		return s.toLowerCase()
-	}
+	check: (s) => s == s.as(LowerCase),
+	convert: (s) => s.toLowerCase(),
 })
 
 const Capitalised = new Type({
-	check(s) {
-		return s[0] == s[0].as(UpperCase)
-	},
-	convert(s) {
-		return s.slice(0, 1).as(UpperCase) + s.slice(1)
-	}
+	check: s => s[0] == s[0].as(UpperCase),
+	convert: s => s.slice(0, 1).as(UpperCase) + s.slice(1),
+})
+
+const PureObject = new Type({
+	check: o => o.constructor == Object,
+})
+
+const Literal = new Type({
+	check: l => l.is(Number) || l.is(String) || l.is(RegExp),
 })
