@@ -9,6 +9,14 @@ Reflect.defineProperty(Element.prototype, "on", {
 	},
 })
 
+Reflect.defineProperty(NodeList.prototype, "on", {
+	get() {
+		return new Proxy(this, {
+			get: (nodelist, eventName, callback) => (callback) => nodelist.forEach(element => element.addEventListener(eventName, callback)),
+		})
+	},
+})
+
 Reflect.defineProperty(window, "on", {
 	get() {
 		return new Proxy(this, {
