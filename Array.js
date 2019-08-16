@@ -30,6 +30,26 @@ Reflect.defineProperty(Array.prototype, "pull", {
 	},
 })
 
+Number.prototype.to = function(target) {
+	const number = this.valueOf()
+	const array = []
+	let iterator = 1
+	let i = number
+	
+	if (number <= target) {
+		while (i <= target) {
+			array.push(i)
+			i = i + 1
+		}
+	} else {
+		while (target <= i) {
+			array.push(i)
+			i = i - 1
+		}
+	}
+	return array
+}
+
 /*=====//
 // Set //
 //=====*/
