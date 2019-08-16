@@ -1,3 +1,6 @@
+//======//
+// Loop //
+//======//
 function repeat(number, func) {
 	for (let i = 0; i < number; i++) {
 		func(i)
@@ -5,7 +8,8 @@ function repeat(number, func) {
 }
 
 Number.prototype[Symbol.iterator] = function*() {
-	if (this >= 0) {
+	if (this == 0) yield 0
+	if (this > 0) {
 		for (let i = 0; i < this; i++) {
 			yield i
 		}
