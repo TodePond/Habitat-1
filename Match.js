@@ -1,3 +1,6 @@
+//=======//
+// Match //
+//=======//
 {
 	
 	function matchValueToArgs(value, ...args) {
@@ -186,7 +189,16 @@
 	
 	Reflect.defineProperty(Object.prototype, "match", {
 		value(...rules) {
-			return match(this, ...rules)
+			return match(this.valueOf(), ...rules)
+		}
+	})
+	
+	const stringMatch = String.prototype.match
+	
+	Reflect.defineProperty(String.prototype, "match", {
+		value(...args) {
+			if (args.length == 1) return stringMatch.apply(this, args)
+			return match(this.valueOf(), ...args)
 		}
 	})
 	
