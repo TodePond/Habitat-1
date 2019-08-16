@@ -92,10 +92,10 @@ const Capitalised = new Type({
 	convert: s => s.slice(0, 1).as(UpperCase) + s.slice(1),
 })
 
-const PureObject = new Type({
+const ObjectLiteral = new Type({
 	check: o => o.constructor == Object,
 })
 
-const Literal = new Type({
-	check: l => l.is(Number) || l.is(String) || l.is(RegExp),
+const Primitive = new Type({
+	check: p => p.is(Number) || p.is(String) || p.is(RegExp) || p.is(Symbol),
 })
