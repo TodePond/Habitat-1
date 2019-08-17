@@ -1,14 +1,14 @@
 /*===================//
-// PropertyDescriptor.js //
+// PropertyEditor.js //
 //===================*/
 {
 
-	const CACHE_SYMBOL = Symbol("CustomPropertyDescriptors")
+	const CACHE_SYMBOL = Symbol("CustomPropertyEditors")
 	const DEFAULT_DESCRIPTOR = {
 		value: undefined,
 		get: (self, propertyName) => self._[propertyName].value,
 		set: (v, self, propertyName) => self._[propertyName].value = v,
-		type: undefined,
+		type: Any,
 		writable: true,
 		enumerable: true,
 		configurable: true,
@@ -35,35 +35,39 @@
 		}
 	})
 	
-	function forceGetEditor(object, propertyName) {
+	const forceGetEditor = (object, propertyName) => {
 		const cache = forceGetCache(object)
 		const editor = cache[propertyName]
-		if (editor == undefined) return new PropertyDescriptor(object, propertyName)
+		if (editor == undefined) return new PropertyEditor(object, propertyName)
 		return editor
 	}
 	
-	function forceSetEditor(object, propertyName, descriptor) {
+	const forceSetEditor = (object, propertyName, descriptor) => {
 		const editor = forceGetEditor(object, propertyName)
 		editor.readDescriptor(descriptor)
 		editor.update()
 	}
 	
-	function forceGetCache(object) {
+	const forceGetCache = (object) => {
 		const cache = getCache(object)
 		if (cache == undefined) return createCache(object)
 		return cache
 	}
 	
-	function getCache(object) {
+	const getCache = (object) => {
 		return object[CACHE_SYMBOL]
 	}
 	
-	function createCache(object) {
+	const createCache = (object) => {
 		Reflect.defineProperty(object, CACHE_SYMBOL, {value: {}})
 		return getCache(object)
 	}
+	
+	const is = (object, type) => {
+		return Object.prototype.is.apply(object, [type])
+	}
 
-	class PropertyDescriptor {
+	class PropertyEditor {
 	
 		constructor(object, propertyName) {
 			
@@ -120,14 +124,14 @@
 				const self = this
 				descriptor.get = function() {
 					let result = get.apply(this, [this, self.propertyName])
-					if (!result.is(type)) throw new TypeError (`Property "${self.propertyName}" failed custom type check.`)
+					if (!is(result, type)) throw new TypeError (`Property "${self.propertyName}" failed custom type check.`)
 					if (!typeCheck(result)) throw new TypeError (`Property "${self.propertyName}" failed custom type check.`)
 					return result
 				}
 				
 				descriptor.set = function(v) {
 					set.apply(this, [v, this, self.propertyName])
-					self.object[self.propertyName]
+					self.object[self.propertyName] //force a type-check
 				}
 			}
 			else {
