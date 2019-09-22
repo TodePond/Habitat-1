@@ -1,34 +1,44 @@
 //=========//
 // Element //
 //=========//
-Reflect.defineProperty(Element.prototype, "on", {
-	get() {
-		return new Proxy(this, {
-			get: (element, eventName, callback) => (callback) => element.addEventListener(eventName, callback),
-		})
-	},
-})
+if (this.Element) {
 
-Reflect.defineProperty(NodeList.prototype, "on", {
-	get() {
-		return new Proxy(this, {
-			get: (nodelist, eventName, callback) => (callback) => nodelist.forEach(element => element.addEventListener(eventName, callback)),
-		})
-	},
-})
+	Reflect.defineProperty(Element.prototype, "on", {
+		get() {
+			return new Proxy(this, {
+				get: (element, eventName, callback) => (callback) => element.addEventListener(eventName, callback),
+			})
+		},
+	})
 
-Reflect.defineProperty(window, "on", {
-	get() {
-		return new Proxy(this, {
-			get: (element, eventName, callback) => (callback) => element.addEventListener(eventName, callback),
-		})
-	},
-})
+	Reflect.defineProperty(NodeList.prototype, "on", {
+		get() {
+			return new Proxy(this, {
+				get: (nodelist, eventName, callback) => (callback) => nodelist.forEach(element => element.addEventListener(eventName, callback)),
+			})
+		},
+	})
+
+	Reflect.defineProperty(window, "on", {
+		get() {
+			return new Proxy(this, {
+				get: (element, eventName, callback) => (callback) => element.addEventListener(eventName, callback),
+			})
+		},
+	})
+}
 
 //========//
 // Object //
 //========//
 {
+	
+	Reflect.defineProperty(Object.prototype, "fireEvent", {
+		value(eventName, detail) {
+			const event = new CustomEvent(eventName, {detail})
+			return this.dispatchEvent(event)
+		},
+	})
 	
 	Reflect.defineProperty(Object.prototype, "addEventListener", {
 		value(...args) {
@@ -41,6 +51,7 @@ Reflect.defineProperty(window, "on", {
 	Reflect.defineProperty(Object.prototype, "dispatchEvent", {
 		value(...args) {
 			const eventTarget = summonEventTarget(this)
+			window.dispatchEvent(...args)
 			return eventTarget.dispatchEvent(...args)
 		},
 		writable: true,

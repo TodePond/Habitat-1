@@ -12,7 +12,10 @@
 		const rule = ruleReport.rule
 		const output = rule.output
 		
-		if (output.is(Function)) return output(value)
+		if (output.is(Function)) {
+			if (value && value.is(Array)) return output(...value)
+			return output(value)
+		}
 		return output
 	}
 	
@@ -39,12 +42,13 @@
 			rule: trueReport.rule,
 			depth: 4,
 			innerDepth: 0,
+			success: true,
 		})
 		
 		if (value === undefined) return new Report({
-			success: false,
 			depth: 0,
 			innerDepth: 0,
+			success: false,
 		})
 		
 		const exactReport = checkExactMatch(value, rules)
@@ -52,13 +56,7 @@
 			rule: exactReport.rule,
 			depth: 3,
 			innerDepth: 0,
-		})
-		
-		const typeReport = checkTypeMatch(value, rules)
-		if (typeReport.success) return new Report({
-			rule: typeReport.rule,
-			depth: 2,
-			innerDepth:	typeReport.depth,
+			success: true,
 		})
 		
 		const arrayReport = checkArrayMatch(value, rules)
@@ -66,6 +64,15 @@
 			rule: arrayReport.rule,
 			depth: arrayReport.depth,
 			innerDepth: arrayReport.innerDepth,
+			success: true,
+		})
+		
+		const typeReport = checkTypeMatch(value, rules)
+		if (typeReport.success) return new Report({
+			rule: typeReport.rule,
+			depth: 2,
+			innerDepth:	typeReport.depth,
+			success: true,
 		})
 		
 		return new Report({
@@ -80,7 +87,7 @@
 	//========//
 	function checkTrueMatch(value, rules) {
 		for (const rule of rules) {
-			if (rule.pattern === true) return new Report({rule})
+			if (rule.pattern === true) return new Report({rule, success: true})
 		}
 		
 		return new Report({success: false})
@@ -89,7 +96,7 @@
 	function checkExactMatch(value, rules) {
 		for (const rule of rules) {
 			const pattern = rule.pattern
-			if (value === pattern) return new Report({rule})
+			if (value === pattern) return new Report({rule, success: true})
 		}
 		
 		return new Report({success: false})
@@ -113,7 +120,7 @@
 			return b
 		})
 		
-		return new Report({rule: deepestMatch, depth: getTypeDepth(deepestMatch.pattern)})
+		return new Report({rule: deepestMatch, depth: getTypeDepth(deepestMatch.pattern), success: true})
 	}
 	
 	getTypeDepth = function(type) {
@@ -130,8 +137,7 @@
 	function checkArrayMatch(value, rules) {
 		
 		if (!value.is(Array)) return new Report({success: false})
-		
-		const array = value
+		const array = value.trim()
 		const matches = []
 		
 		for (const rule of rules) {
@@ -142,17 +148,29 @@
 		
 		if (matches.length == 0) return new Report({success: false})
 		
-		const deepestMatch = matches.reduce((a, b) => {
+		let deepestDepth = -1
+		let deepestInnerDepth = -1
+		let deepestMatch = undefined
+		for (const match of matches) {
 		
-			const aDeepest = getDeepestMatchInArray(array, a.pattern)
-			const bDeepest = getDeepestMatchInArray(array, b.pattern)
+			const matchDeepest = getDeepestMatchInArray(array, match.pattern)
 			
-			if (aDeepest.depth > bDeepest.depth) return a
-			if (aDeepest.depth == bDeepest.depth && aDeepest.innerDepth > bDeepest.innerDepth) return a
-			return b
-		})
+			if (matchDeepest.depth == deepestDepth && matchDeepest.innerDepth > deepestInnerDepth) {
+				deepestMatch = match
+				deepestDepth = matchDeepest.depth
+				deepestInnerDepth = matchDeepest.innerDepth
+			}
+			
+			if (matchDeepest.depth > deepestDepth) {
+				deepestMatch = match
+				deepestDepth = matchDeepest.depth
+				deepestInnerDepth = matchDeepest.innerDepth
+			}
+		}
 		
-		return new Report({rule: deepestMatch, depth: deepestMatch.depth, innerDepth: deepestMatch.innerDepth})
+		if (deepestMatch == undefined) return new Report({success: false})
+		
+		return new Report({rule: deepestMatch, depth: deepestDepth, innerDepth: deepestInnerDepth, success: true})
 	}
 	
 	function getDeepestMatchInArray(array, arrayPattern) {
@@ -165,6 +183,7 @@
 			const pattern = arrayPattern[i]
 			const rule = new Rule(pattern)
 			const matchReport = matchValueToRules(value, [rule])
+			if (!matchReport.success) return new Report({success: false, depth: -1, innerDepth: -1})
 			matches.push(matchReport)
 		}
 		

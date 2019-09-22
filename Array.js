@@ -30,6 +30,17 @@ Reflect.defineProperty(Array.prototype, "pull", {
 	},
 })
 
+Reflect.defineProperty(Array.prototype, "trim", {
+	value() {
+		const lastIndex = this.length-1
+		if (this[lastIndex] == undefined) {
+			const trimmed = this.slice(0, lastIndex)
+			return trimmed.trim()
+		}
+		return this
+	}
+})
+
 Number.prototype.to = function(target) {
 	const number = this.valueOf()
 	const array = []

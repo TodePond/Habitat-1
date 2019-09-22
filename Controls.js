@@ -22,21 +22,21 @@ on.keyup(event => {
 //========//
 // Cursor //
 //========//
-const Cursor = {
+const Mouse = {
 	down: undefined,
 	x: undefined,
 	y: undefined,
 }
 
 on.mousedown(event => {
-	Cursor.down = true
+	if (event.buttons == 1) Mouse.down = true
 })
 
 on.mouseup(event => {
-	Cursor.down = false
+	if (event.buttons == 0) Mouse.down = false
 })
 
 on.mousemove(event => {
-	Cursor.x = event.clientX
-	Cursor.y = event.clientY
+	Mouse.x = event.clientX
+	Mouse.y = event.clientY
 })

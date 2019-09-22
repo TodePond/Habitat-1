@@ -20,5 +20,5 @@ function HTML(...args) {
 	template.innerHTML = html
 	const nodeList = template.content.childNodes
 	if (nodeList.length == 1) return nodeList[0]
-	else return nodeList
+	return template
 }
