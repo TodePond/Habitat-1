@@ -41,6 +41,16 @@ Reflect.defineProperty(Array.prototype, "trim", {
 	}
 })
 
+Reflect.defineProperty(Array.prototype, "repeat", {
+	value(n) {
+		const array = []
+		for (let i = 0; i < n; i++) {
+			array.push(...this)
+		}
+		return array
+	}
+})
+
 Number.prototype.to = function(target) {
 	const number = this.valueOf()
 	const array = []
@@ -85,5 +95,17 @@ Reflect.defineProperty(Set.prototype, "reversed", {
 Reflect.defineProperty(Set.prototype, "length", {
 	get() {
 		return this.size
+	},
+})
+
+/*=====//
+// Set //
+//=====*/
+Reflect.defineProperty(String.prototype, "map", {
+	value(...args) {
+		const array = this.split("")
+		const mappedArray = array.map(...args)
+		const mappedString = mappedArray.join("")
+		return mappedString
 	},
 })
