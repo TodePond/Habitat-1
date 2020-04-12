@@ -43,7 +43,8 @@ Reflect.defineProperty(Object.prototype, "or", {
 			},
 			depth: Math.min(getTypeDepth(type1), getTypeDepth(type2)) - 0.01,
 		})
-	}
+	},
+	writable: true,
 })
 
 class Type {
@@ -95,6 +96,11 @@ const LowerCase = new Type({
 	name: "LowerCase",
 	check: (s) => s == s.as(LowerCase),
 	convert: (s) => s.toLowerCase(),
+})
+
+const WhiteSpace = new Type({
+	name: "WhiteSpace",
+	check: (s) => /^[ |	]*$/.test(s),
 })
 
 const Capitalised = new Type({
