@@ -1,6 +1,4 @@
 
-// A MORE UP-TO-DATE VERSION OF THIS FILE IS FOUND IN THE DreamTode PROJECT
-
 //
 // Every result has three properties...
 //
@@ -21,81 +19,151 @@ const EAT = {}
 	//====================//
 	// Control Structures //
 	//====================//
-	EAT.many = (func) => (source, ...args) => {
-		
-		// Buffers
-		let success = undefined
-		let code = source
-		
-		// Head
-		let headResult = undefined
-		headResult = {success, code} = func(code, ...args)
-		if (!success) return {...headResult, code: source}
-		
-		// Tail
-		let tailResult = undefined
-		tailResult = {success, code} = EAT.many(func)(code, ...args)
-		if (!success) return headResult
-		tailResult.snippet = headResult.snippet + tailResult.snippet
-		return tailResult
-		
-	}
+	EAT.many = (func, ...excess) => {
 	
-	EAT.maybe = (func) => (source, ...args) => {
+		if (!func.is(Function)) throw new Error(`[Eat] EAT.many expects a function as its only argument. Instead, received a '${typeof func}'`)
+		if (excess.length > 0) throw new Error(`[Eat] EAT.many expects a function as its only argument. Instead, received ${excess.length + 1} arguments`)
 		
-		let result = undefined
-		let success = undefined
-		let code = source
+		return (source, args) => {
 		
-		result = {success, code} = func(code, ...args)
-		if (!success) {
-			result.success = true
-			result.snippet = ""
+			// Buffers
+			let success = undefined
+			let code = source
+			
+			// Head
+			let headResult = undefined
+			headResult = {success, code} = func(code, args)
+			if (!success) return {...headResult, code: source}
+			
+			// Tail
+			let tailResult = undefined
+			tailResult = {success, code} = EAT.many(func)(code, args)
+			if (!success) return headResult
+			tailResult.snippet = headResult.snippet + tailResult.snippet
+			return tailResult
 		}
-		
-		return result
 	}
 	
-	EAT.list = (...funcs) => (source, ...args) => {
-		
-		// Buffers
-		let success = undefined
-		let code = source
-		
-		// Head
-		let headResult = undefined
-		const headFunc = funcs[0]
-		headResult = {success, code} = headFunc(code, ...args)
-		if (!success) return {...headResult, code: source}
-		
-		// Tail
-		let tailResult = undefined
-		const tailFuncs = funcs.slice(1)
-		if (tailFuncs.length == 0) return headResult
-		tailResult = {success, code} = EAT.list(...tailFuncs)(code, ...args)
-		tailResult.snippet = headResult.snippet + tailResult.snippet
-		return tailResult
-		
-	}
+	EAT.maybe = (func, ...excess) => {
 	
-	EAT.or = (...funcs) => (source, ...args) => {
-	
-		for (const func of funcs) {
+		if (!func.is(Function)) throw new Error(`[Eat] EAT.maybe expects a function as its only argument. Instead, received a '${typeof func}'`)
+		if (excess.length > 0) throw new Error(`[Eat] EAT.maybe expects a function as its only argument. Instead, received ${excess.length + 1} arguments`)
+		
+		return (source, args) => {
 		
 			let result = undefined
 			let success = undefined
 			let code = source
 			
-			result = {success, code} = func(code, ...args)
-			if (success) return result
+			result = {success, code} = func(code, args)
+			if (!success) {
+				result.success = true
+				result.snippet = ""
+			}
+			
+			return result
 		}
-		
-		const success = false
-		const code = source
-		const snippet = undefined
-		return {success, snippet, code}
 	}
 	
+	EAT.list = (...funcs) => {
+	
+		for (const func of funcs) if (!func.is(Function)) {
+			throw new Error(`[Eat] EAT.list expects all arguments to be functions, but received a '${typeof func}'`)
+		}
+		
+		return (source, args) => {
+		
+			// Buffers
+			let success = undefined
+			let code = source
+			
+			// Head
+			let headResult = undefined
+			const headFunc = funcs[0]
+			if (headFunc === undefined) return EAT.fail(source)
+			headResult = {success, code} = headFunc(code, args)
+			if (!success) return {...headResult, code: source}
+			
+			// Tail
+			let tailResult = undefined
+			const tailFuncs = funcs.slice(1)
+			if (tailFuncs.length == 0) return headResult
+			tailResult = {success, code} = EAT.list(...tailFuncs)(code, args)
+			tailResult.snippet = headResult.snippet + tailResult.snippet
+			return tailResult
+		}
+	}
+	
+	EAT.or = (...funcs) => {
+		for (const func of funcs) if (!func.is(Function)) {
+			throw new Error(`[Eat] EAT.or expects all arguments to be functions, but received a '${typeof func}'`)
+		}
+		return EAT.orDynamic(funcs)
+	}
+	
+	EAT.orDynamic = (funcs, ...excess) => {
+		
+		if (excess.length > 0) throw new Error(`[Eat] EAT.orDynamic expects an array of functions as its only argument. Instead, received ${excess.length + 1} arguments`)
+		for (const func of funcs) if (!func.is(Function)) {
+			throw new Error(`[Eat] EAT.orDynamic expects all arguments to be functions, but received a '${typeof func}'`)
+		}
+		
+		return (source, args = {without: []}) => {
+			const {without} = args
+			for (const func of funcs) {
+				if (without.includes(func)) continue
+				const result = func(source, args)
+				if (result.success) return result
+			}
+			return EAT.fail(source)
+		}
+	}
+	
+	EAT.without = (func, without, ...excess) => {
+	
+		if (!func.is(Function)) throw new Error(`[Eat] EAT.without expects the first argument to be a function. Instead, received a '${typeof func}'`)
+		if (!without.is(Array.of(Function))) throw new Error(`[Eat] EAT.without expects the second argument to be an array of functions. Instead, received a '${without.dir}'`)
+		if (excess.length > 0) throw new Error(`[Eat] EAT.without expects 2 functions as arguments. Instead, received ${excess.length + 2} arguments`)
+		
+		return (source, args) => {
+			return func(source, {...args, without: [...args.without, ...without]})
+		}
+	}
+	
+	EAT.and = (...funcs) => {
+	
+		for (const func of funcs) if (!func.is(Function)) {
+			throw new Error(`[Eat] EAT.and expects all arguments to be functions, but received a '${typeof func}'`)
+		}
+	
+		return (source, args) => {
+			for (const func of funcs) {
+				const result = func(source, args)
+				if (!result.success) return EAT.fail(source)
+			}
+			return EAT.succeed(source)
+		}
+	}
+	
+	EAT.not = (func) => (source, args) => {
+		const result = func(source, args)
+		if (result.success) return EAT.fail(source)
+		else return {...result, success: true}
+	}
+	
+	const referenceCache = {}
+	EAT.reference = (funcName) => {
+		if (referenceCache[funcName] != undefined) return referenceCache[funcName]
+		const func = (source, args) => EAT[funcName](source, args)
+		referenceCache[funcName] = func
+		return func
+	}
+	EAT.ref = EAT.reference
+	
+	EAT.endOfFile = (source) => ({success: source.length == 0, snippet: "", code: source})
+	EAT.eof = EAT.endOfFile
+	
+	EAT.succeed = (source) => ({success: true, snippet: undefined, code: source})
 	EAT.fail = (source) => ({success: false, snippet: undefined, code: source})
 	
 	//====================//
@@ -148,13 +216,6 @@ const EAT = {}
 		)
 	)
 	
-	EAT.emptyLine = EAT.list (
-		EAT.maybe(EAT.gap),
-		EAT.newline,
-	)
-	
-	EAT.emptyLines = EAT.many(EAT.emptyLine)
-	
 	EAT.name = EAT.list (
 		EAT.regexp(/[a-zA-Z_$]/),
 		EAT.many(EAT.regex(/[a-zA-Z0-9_$]/))
@@ -166,4 +227,5 @@ const EAT = {}
 	)
 	
 	EAT.line = EAT.many(EAT.regex(/[^\n]/))
+	
 }
