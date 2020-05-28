@@ -19,6 +19,14 @@ if (this.Element) {
 		},
 	})
 
+	Reflect.defineProperty(NodeList.prototype, "onPassive", {
+		get() {
+			return new Proxy(this, {
+				get: (nodelist, eventName, callback) => (callback) => nodelist.forEach(element => element.addEventListener(eventName, callback, {passive: true})),
+			})
+		},
+	})
+
 	Reflect.defineProperty(window, "on", {
 		get() {
 			return new Proxy(this, {
@@ -69,6 +77,22 @@ if (this.Element) {
 		get() {
 			return new Proxy(this, {
 				get: (object, eventName, callback) => (callback) => object.addEventListener(eventName, callback),
+			})
+		},
+	})
+	
+	Reflect.defineProperty(Object.prototype, "when", {
+		get() {
+			return new Proxy(this, {
+				get: (object, eventName, callback) => (callback) => {
+					return new Promise((resolve) => {
+						object.addEventListener(eventName, (...args) => {
+							const result = callback(...args)
+							resolve(result)
+							return result
+						}, {once: true})
+					})
+				}
 			})
 		},
 	})

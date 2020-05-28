@@ -17,6 +17,12 @@ Reflect.defineProperty(Array.prototype, "reversed", {
 	},
 })
 
+Reflect.defineProperty(Array.prototype, "shuffled", {
+	get() {
+		return [...this].sort(() => Math.random() - 0.5)
+	},
+})
+
 Reflect.defineProperty(Array.prototype, "first", {
 	get() {
 		return this[0]
@@ -30,12 +36,25 @@ Reflect.defineProperty(Array.prototype, "pull", {
 	},
 })
 
-Reflect.defineProperty(Array.prototype, "trim", {
-	value() {
+Reflect.defineProperty(Array.prototype, "trimmed", {
+	get() {
+		if (this.length == 0) return [...this]
 		const lastIndex = this.length-1
 		if (this[lastIndex] == undefined) {
 			const trimmed = this.slice(0, lastIndex)
 			return trimmed.trim()
+		}
+		return [...this]
+	}
+})
+
+Reflect.defineProperty(Array.prototype, "trim", {
+	value() {
+		if (this.length == 0) return this
+		const lastIndex = this.length-1
+		if (this[lastIndex] == undefined) {
+			this.splice(-1, 1)
+			return this.trim()
 		}
 		return this
 	}
