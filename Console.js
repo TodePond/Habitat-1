@@ -29,8 +29,8 @@ const dir = console.dir.bind(console)
 		},
 	})
 	
-	Reflect.defineProperty(Symbol.prototype, "toDescription", {
-		value() {
+	Reflect.defineProperty(Symbol.prototype, "description", {
+		get() {
 			return this.toString().slice(7, -1)
 		},
 	})
