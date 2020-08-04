@@ -23,9 +23,26 @@ Reflect.defineProperty(Array.prototype, "reversed", {
 	},
 })
 
+Reflect.defineProperty(Array.prototype, "uniques", {
+	get() { return [...new Set(this)] },
+})
+
 Reflect.defineProperty(Array.prototype, "shuffled", {
 	get() {
-		return [...this].sort(() => Math.random() - 0.5)
+		const array = [...this]
+		return array.shuffle()
+	},
+})
+
+Reflect.defineProperty(Array.prototype, "shuffle", {
+	value() {
+		for(let i = this.length - 1; i > 0; i--){
+			const j = Math.floor(Math.random() * (i + 1))
+			const temp = this[i]
+			this[i] = this[j]
+			this[j] = temp
+		}
+		return this
 	},
 })
 
@@ -33,6 +50,20 @@ Reflect.defineProperty(Array.prototype, "pull", {
 	value(value) {
 		const index = this.indexOf(value)
 		if (index > -1) this.splice(index, 1)
+	},
+})
+
+// Returns the id of the value in the array
+Reflect.defineProperty(Array.prototype, "pushUnique", {
+	value(...args) {
+		if (args.length == 0) return undefined
+		if (args.length == 1) { 
+			const value = args[0]
+			const id = this.indexOf(value)
+			if (id !== -1) return id
+			return this.push(value) - 1
+		}
+		return args.map(arg => this.pushUnique(arg))
 	},
 })
 
@@ -70,6 +101,16 @@ Reflect.defineProperty(Array.prototype, "repeated", {
 	}
 })
 
+Reflect.defineProperty(Array.prototype, "without", {
+	value(value) {
+		const array = []
+		for (const v of this) {
+			if (v !== value) array.push(v)
+		}
+		return array
+	},
+})
+
 Number.prototype.to = function(target) {
 	const number = this.valueOf()
 	const array = []
@@ -90,41 +131,14 @@ Number.prototype.to = function(target) {
 	return array
 }
 
-/*=====//
-// Set //
-//=====*/
-Reflect.defineProperty(Set.prototype, "first", {
-	get() {
-		return this.values().first
-	}
-})
-
-Reflect.defineProperty(Set.prototype, "last", {
-	get() {
-		return this.values().last
-	}
-})
-
-Reflect.defineProperty(Set.prototype, "reversed", {
-	get() {
-		return this.values().reversed
-	}
-})
-
-Reflect.defineProperty(Set.prototype, "length", {
-	get() {
-		return this.size
-	},
-})
-
 /*========//
-// String //
+// Object //
 //========*/
-Reflect.defineProperty(String.prototype, "map", {
+// Breaks too much stuff
+/*Reflect.defineProperty(Object.prototype, "map", {
 	value(...args) {
-		const array = this.split("")
+		const array = Object.values(this)
 		const mappedArray = array.map(...args)
-		const mappedString = mappedArray.join("")
-		return mappedString
+		return mappedArray
 	},
-})
+})*/

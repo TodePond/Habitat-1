@@ -38,7 +38,7 @@
 			})
 		},
 		has() {
-			return this[__SYMBOL] == undefined
+			return this[__SYMBOL] === undefined
 		}
 	})
 	
@@ -223,7 +223,8 @@
 	Reflect.defineProperty(Object.prototype, "has", {
 		value(propertyName) {
 			return propertyName in this
-		}
+		},
+		writable: true,
 	})
 	
 }
