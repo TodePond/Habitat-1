@@ -19,6 +19,14 @@ if (this.Element) {
 		},
 	})
 
+	Reflect.defineProperty(Element.prototype, "onPassive", {
+		get() {
+			return new Proxy(this, {
+				get: (element, eventName, callback) => (callback) => element.addEventListener(eventName, callback, {passive: true}),
+			})
+		},
+	})
+
 	// TODO: make this work with other stuff - not just NodeList
 	Reflect.defineProperty(NodeList.prototype, "onPassive", {
 		get() {
