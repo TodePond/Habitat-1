@@ -19,6 +19,7 @@ const readFile = async (path) => {
 	source += fileSource
 }
 
+await readFile("Source/Habitat.js")
 await readFile("Source/Array.js")
 await readFile("Source/Async.js")
 await readFile("Source/Console.js")

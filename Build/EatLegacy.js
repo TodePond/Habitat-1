@@ -16,6 +16,7 @@
 //
 
 EAT = {}
+HABITAT.EAT_LEGACY = true
 
 {
 	

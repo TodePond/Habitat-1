@@ -1,5 +1,10 @@
 
 
+//==== Source/Habitat.js ====//
+;
+const HABITAT = {VERSION: 1}
+
+
 //==== Source/Array.js ====//
 ;/*=======//
 // Array //
