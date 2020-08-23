@@ -1,6 +1,6 @@
 
 const decoder = new TextDecoder()
-const encoder = new TextEncoder()
+const encoder = new TextEncoder("utf-8")
 
 let source = ""
 
