@@ -1,4 +1,4 @@
 [[redirects]]
 	from = "/"
-	to = "/Habitat.js"
+	to = "Build/Habitat.js"
 	status = 200
