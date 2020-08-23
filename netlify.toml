@@ -2,3 +2,4 @@
 	from = "/"
 	to = "Build/Habitat.js"
 	status = 200
+	

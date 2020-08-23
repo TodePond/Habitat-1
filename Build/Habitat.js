@@ -1468,7 +1468,7 @@ Math.reduce = (...args) => {
 // the rest of the code (with the desired thing removed)
 //
 
-const EAT = {}
+EAT = {}
 
 {
 	
