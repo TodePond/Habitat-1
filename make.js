@@ -41,7 +41,7 @@ await readFile("Source/Math.js")
 await readFile("Source/Eat.js")
 await readFile("Source/Flag.js")
 await readFile("Source/ThirdParty/three.min.js")
-/*await readFile("Source/ThirdParty/OrbitControls.js")
+await readFile("Source/ThirdParty/OrbitControls.js")
 await readFile("Source/ThirdParty/EffectComposer.js")
 await readFile("Source/ThirdParty/CopyShader.js")
 await readFile("Source/ThirdParty/ShaderPass.js")
@@ -51,7 +51,7 @@ await readFile("Source/ThirdParty/BokehShader.js")
 await readFile("Source/ThirdParty/DepthLimitedBlurShader.js")
 await readFile("Source/ThirdParty/UnpackDepthRGBAShader.js")
 await readFile("Source/ThirdParty/SAOShader.js")
-await readFile("Source/ThirdParty/SAOPass.js")*/
+await readFile("Source/ThirdParty/SAOPass.js")
 
 //await readDir("Source") //TODO: make every file not dependent on each other, and then automatically find and merge them
 const data = encoder.encode(source)
