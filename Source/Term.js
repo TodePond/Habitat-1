@@ -43,19 +43,22 @@ TERM = {}
 		return self
 	}
 	
-	TERM.regexp = TERM.regExp = TERM.regex = TERM.regEx = (regex) => (input) => {
-		const fullRegex = new RegExp("^" + regex.source + "$")
-		let i = 0
-		while (i <= input.length) {
-			const source = input.slice(0, i)
-			const success = fullRegex.test(source)
-			if (success) {
-				const tail = input.slice(source.length)
-				return TERM.succeed({tail, source, term: TERM.regexp})
+	TERM.regexp = TERM.regExp = TERM.regex = TERM.regEx = (regex) => {
+		const self = (input) => {
+			const fullRegex = new RegExp("^" + regex.source + "$")
+			let i = 0
+			while (i <= input.length) {
+				const source = input.slice(0, i)
+				const success = fullRegex.test(source)
+				if (success) {
+					const tail = input.slice(source.length)
+					return TERM.succeed({tail, source, term: self})
+				}
+				i++
 			}
-			i++
+			return TERM.fail({tail: input, term: self})
 		}
-		return TERM.fail({tail: input, term: TERM.regexp})
+		return self
 	}
 	
 	//=========//
@@ -66,7 +69,7 @@ TERM = {}
 			const result = term(input)
 			if (result.success) {
 				const {tail, source} = result
-				const output = func(result)
+				const output = result.child === undefined? func(result) : func(result.child)
 				return TERM.succeed({tail, source, output, term: self}, result)
 			}
 			return TERM.fail({tail: input, term: self})
@@ -74,28 +77,31 @@ TERM = {}
 		return self
 	}
 	
-	TERM.many = (term) => (input) => {
+	TERM.many = (term) => {
+		const self = (input) => {
 		
-		const headResult = term(input)
-		if (!headResult.success) {
-			const arg = [headResult.arg]
-			return TERM.fail({tail: input}, arg)
+			const headResult = term(input)
+			if (!headResult.success) {
+				const child = [headResult]
+				return TERM.fail({tail: input, term: self}, child)
+			}
+			
+			const tailResult = TERM.many(term)(headResult.tail)
+			if (!tailResult.success) {
+				const {tail, source} = headResult
+				const child = [headResult]
+				return TERM.succeed({tail, source, term: self}, child)
+			}
+			
+			const tail = tailResult.tail
+			const source = headResult.source + tailResult.source
+			const child = [headResult, ...tailResult.child]
+			return TERM.succeed({tail, source, term: self}, child)
 		}
-		
-		const tailResult = TERM.many(term)(headResult.tail)
-		if (!tailResult.success) {
-			const {tail, source} = headResult
-			const arg = [headResult.arg]
-			return TERM.succeed({tail, source}, arg)
-		}
-		
-		const tail = tailResult.tail
-		const source = headResult.source + tailResult.source
-		const arg = [headResult.arg, ...tailResult.arg]
-		return TERM.succeed({tail, source}, arg)
+		return self
 	}
 	
-	TERM.maybe = (term) => (input) => {
+	TERM.maybe = (term) => (input) => {a
 		const result = term(input)
 		const {tail, source, arg} = result
 		return TERM.succeed({tail, source, source}, arg)

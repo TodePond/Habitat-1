@@ -38,20 +38,26 @@
 
 //TERM.regexp(/hello/)("hello world").d
 
-
+/*
 TERM.Greet = TERM.emit(
 	TERM.string("world"),
 	(t) => "Hello " + t.source,
 )
-
 TERM.Greet("world").d
+*/
 
-/*
+//TERM.many(TERM.string("o"))("ooo").d
+
+
+TERM.Greet = TERM.emit(
+	TERM.regex(/\w/),
+	(t) => "Hello " + t.source,
+)
 TERM.emit(
 	TERM.many(TERM.Greet),
 	([g, b]) => g.output + b.output
 )("gbv").d
-*/
+
 /*
 TERM.World = TERM.emit(TERM.string("world"), ()=> "WOOORLD")
 TERM.maybe(TERM.World)("worsld").d
