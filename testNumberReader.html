@@ -1,0 +1,135 @@
+<script src="Source/Habitat.js"></script>
+<script src="Source/Array.js"></script>
+<script src="Source/Async.js"></script>
+<script src="Source/Console.js"></script>
+<script src="Source/Bracketless.js"></script>
+<script src="Source/Document.js"></script>
+<script src="Source/Loop.js"></script>
+<script src="Source/Match.js"></script>
+<script src="Source/Report.js"></script>
+<script src="Source/Type.js"></script>
+<script src="Source/Event.js"></script>
+<script src="Source/Worker.js"></script>
+<script src="Source/Vector.js"></script>
+<script src="Source/PropertyEditor.js"></script>
+<script src="Source/Controls.js"></script>
+<script src="Source/Set.js"></script>
+<script src="Source/Stage.js"></script>
+<script src="Source/String.js"></script>
+<script src="Source/Javascript.js"></script>
+<script src="Source/Math.js"></script>
+<script src="Source/Eat.js"></script>
+<script src="Source/Term.js"></script>
+<script src="Source/Flag.js"></script>
+<script src="Source/ThirdParty/three.min.js"></script>
+<script src="Source/ThirdParty/OrbitControls.js"></script>
+<script src="Source/ThirdParty/EffectComposer.js"></script>
+<script src="Source/ThirdParty/CopyShader.js"></script>
+<script src="Source/ThirdParty/ShaderPass.js"></script>
+<script src="Source/ThirdParty/RenderPass.js"></script>
+<script src="Source/ThirdParty/BokehPass.js"></script>
+<script src="Source/ThirdParty/BokehShader.js"></script>
+<script src="Source/ThirdParty/DepthLimitedBlurShader.js"></script>
+<script src="Source/ThirdParty/UnpackDepthRGBAShader.js"></script>
+<script src="Source/ThirdParty/SAOShader.js"></script>
+<script src="Source/ThirdParty/SAOPass.js"></script>
+
+<script>
+
+
+const N = ([input]) => TERM.NumberWordSource(input).output
+
+TERM.NumberWordSource = TERM.emit(
+	TERM.list([
+		TERM.maybe(TERM.whitespace),
+		TERM.term("NumberWord"),
+		TERM.maybe(TERM.whitespace),
+		TERM.eof,
+	]),
+	([ws, numberWord]) => numberWord.output,
+)
+
+TERM.NumberWord = TERM.emit(
+	TERM.or([
+		TERM.term("TeensWord"),
+		TERM.term("TensWord"),
+		TERM.term("OnesWord"),
+	]),
+	(terms) => terms.last.output
+)
+
+TERM.TensWord = TERM.emit(
+	TERM.list([
+		TERM.term("Tens"),
+		TERM.emit(
+			TERM.maybe(
+				TERM.emit(
+					TERM.list([
+						TERM.string("-"),
+						TERM.term("Ones"),
+					]),
+					([_, ones]) => ones.output,
+				)
+			),
+			(term) => term.success? term.output : "0",
+		)
+	]),
+	(terms) => terms.map(term => term.output || "").join(""),
+)
+
+TERM.OnesWord = TERM.emit(
+	TERM.or([
+		TERM.term("Zero"),
+		TERM.term("Ones"),
+	]),
+	(terms) => terms.last.output
+)
+
+TERM.Zero = TERM.emit(TERM.string("zero"), () => "0")
+
+TERM.Tens = TERM.emit(
+	TERM.or([
+		TERM.emit(TERM.string("twenty"), () => "2"),
+		TERM.emit(TERM.string("thirty"), () => "3"),
+		TERM.emit(TERM.string("forty"), () => "4"),
+		TERM.emit(TERM.string("fifty"), () => "5"),
+		TERM.emit(TERM.string("sixty"), () => "6"),
+		TERM.emit(TERM.string("seventy"), () => "7"),
+		TERM.emit(TERM.string("eighty"), () => "8"),
+		TERM.emit(TERM.string("ninety"), () => "9"),
+	]),
+	(terms) => terms.last.output,
+)
+
+TERM.Ones = TERM.emit(
+	TERM.or([
+		TERM.emit(TERM.string("one"), () => "1"),
+		TERM.emit(TERM.string("two"), () => "2"),
+		TERM.emit(TERM.string("three"), () => "3"),
+		TERM.emit(TERM.string("four"), () => "4"),
+		TERM.emit(TERM.string("five"), () => "5"),
+		TERM.emit(TERM.string("six"), () => "6"),
+		TERM.emit(TERM.string("seven"), () => "7"),
+		TERM.emit(TERM.string("eight"), () => "8"),
+		TERM.emit(TERM.string("nine"), () => "9"),
+	]),
+	(terms) => terms.last.output,
+)
+
+TERM.TeensWord = TERM.emit(
+	TERM.or([
+		TERM.emit(TERM.string("ten"), () => "10"),
+		TERM.emit(TERM.string("eleven"), () => "11"),
+		TERM.emit(TERM.string("twelve"), () => "12"),
+		TERM.emit(TERM.string("thirteen"), () => "13"),
+		TERM.emit(TERM.string("fourteen"), () => "14"),
+		TERM.emit(TERM.string("fifteen"), () => "15"),
+		TERM.emit(TERM.string("sixteen"), () => "16"),
+		TERM.emit(TERM.string("seventeen"), () => "17"),
+		TERM.emit(TERM.string("eighteen"), () => "18"),
+		TERM.emit(TERM.string("nineteen"), () => "19"),
+	]),
+	(terms) => terms.last.output,
+)
+
+</script>

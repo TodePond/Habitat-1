@@ -109,8 +109,9 @@ TERM = {}
 	TERM.maybe = (term) => {
 		const self = (input) => {
 			const result = term(input)
-			const {tail, source} = result
-			return TERM.succeed({tail, source, source, term: self}, result)
+			const tail = result.tail
+			const source = result.source === undefined? "" : result.source
+			return TERM.succeed({tail, source, term: self}, result)
 		}
 		self.term = term
 		return self
