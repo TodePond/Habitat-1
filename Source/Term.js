@@ -69,7 +69,8 @@ TERM = {}
 		
 		const headResult = term(input)
 		if (!headResult.success) {
-			return TERM.fail({tail: input})
+			const arg = [headResult.arg]
+			return TERM.fail({tail: input}, arg)
 		}
 		
 		const tailResult = TERM.many(term)(headResult.tail)
@@ -95,7 +96,8 @@ TERM = {}
 		
 		const headResult = terms[0](input)
 		if (!headResult.success) {
-			return TERM.fail({tail: input})
+			const arg = [headResult.arg]
+			return TERM.fail({tail: input}, arg)
 		}
 		
 		if (terms.length <= 1) {
@@ -106,7 +108,9 @@ TERM = {}
 		
 		const tailResult = TERM.list(terms.slice(1))(headResult.tail)
 		if (!tailResult.success) {
-			return TERM.fail({tail: input})
+			const source = headResult.source + (tailResult.source === undefined? "" : tailResult.source)
+			const arg = [headResult.arg, ...tailResult.arg]
+			return TERM.fail({tail: input, source}, arg)
 		}
 		
 		const tail = tailResult.tail
