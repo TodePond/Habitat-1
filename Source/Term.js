@@ -9,43 +9,38 @@ TERM = {}
 	//======//
 	// Meta //
 	//======//
-	TERM.succeed = ({tail, source, output, term}, child) => {
-		const result = {
-			success: true,
-			tail,
-			source,
-			output,
-			term,
-			child,
-		}
-		//if (child === undefined) result.child = result
-		return result
-	}
+	TERM.succeed = ({tail, source, output, term}, child) => ({
+		success: true,
+		tail,
+		source,
+		output,
+		term,
+		child,
+	})
 	
-	TERM.fail = ({tail, source, output, term}, child) => {
-		const result = {
-			success: false,
-			tail,
-			source,
-			output,
-			term,
-			child,
-		}
-		//if (child === undefined) result.child = result
-		return result
-	}
+	TERM.fail = ({tail, source, output, term}, child) => ({
+		success: false,
+		tail,
+		source,
+		output,
+		term,
+		child,
+	})
 	
 	//===========//
 	// Primitive //
 	//===========//
-	TERM.string = (string) => (input) => {
-		const success = input.slice(0, string.length) == string
-		if (success) {
-			const tail = input.slice(string.length)
-			const source = string
-			return TERM.succeed({tail, source})
+	TERM.string = (string) => {
+		const self = (input) => {
+			const success = input.slice(0, string.length) == string
+			if (success) {
+				const tail = input.slice(string.length)
+				const source = string
+				return TERM.succeed({tail, source, term: self})
+			}
+			return TERM.fail({tail: input, term: self})
 		}
-		return TERM.fail({tail: input})
+		return self
 	}
 	
 	TERM.regexp = TERM.regExp = TERM.regex = TERM.regEx = (regex) => (input) => {
@@ -56,23 +51,27 @@ TERM = {}
 			const success = fullRegex.test(source)
 			if (success) {
 				const tail = input.slice(source.length)
-				return TERM.succeed({tail, source})
+				return TERM.succeed({tail, source, term: TERM.regexp})
 			}
 			i++
 		}
-		return TERM.fail({tail: input})
+		return TERM.fail({tail: input, term: TERM.regexp})
 	}
 	
 	//=========//
 	// Control //
 	//=========//
-	TERM.emit = (term, func) => (input) => {
-		const result = term(input)
-		if (result.success) {
-			const output = func(result)
-			return TERM.succeed({...result, output}, result)
+	TERM.emit = (term, func) => {
+		const self = (input) => {
+			const result = term(input)
+			if (result.success) {
+				const {tail, source} = result
+				const output = func(result)
+				return TERM.succeed({tail, source, output, term: self}, result)
+			}
+			return TERM.fail({tail: input, term: self})
 		}
-		return TERM.fail({tail: input})
+		return self
 	}
 	
 	TERM.many = (term) => (input) => {
