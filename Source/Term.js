@@ -120,44 +120,26 @@ TERM = {}
 		
 	}
 	
+	TERM.or = (terms) => (input) => {
+		for (const term of terms) {
+			const result = term(input)
+			if (result.success) {
+				const {tail, source, arg} = result
+				return TERM.succeed({tail, source}, arg)
+			}
+		}
+		return TERM.fail({tail: input})
+	}
+	
 	//====================//
 	// Control Structures //
 	//====================//	
-	/*TERM.list = (...funcs) => {
-	
-		for (const func of funcs) if (!func.is(Function)) {
-			throw new Error(`[Eat] TERM.list expects all arguments to be functions, but received a '${typeof func}'`)
-		}
-		
-		return (source, args) => {
-		
-			// Buffers
-			let success = undefined
-			let code = source
-			
-			// Head
-			let headResult = undefined
-			const headFunc = funcs[0]
-			if (headFunc === undefined) return TERM.fail(source)
-			headResult = {success, code} = headFunc(code, args)
-			if (!success) return {...headResult, code: source}
-			
-			// Tail
-			let tailResult = undefined
-			const tailFuncs = funcs.slice(1)
-			if (tailFuncs.length == 0) return headResult
-			tailResult = {success, code} = TERM.list(...tailFuncs)(code, args)
-			tailResult.snippet = headResult.snippet + tailResult.snippet
-			return tailResult
-		}
-	}*/
-	
-	TERM.or = (...funcs) => {
+	/*TERM.or = (...funcs) => {
 		for (const func of funcs) if (!func.is(Function)) {
 			throw new Error(`[Eat] TERM.or expects all arguments to be functions, but received a '${typeof func}'`)
 		}
 		return TERM.orDynamic(funcs)
-	}
+	}*/
 	
 	TERM.orDynamic = (funcs, ...excess) => {
 		

@@ -53,7 +53,7 @@ TERM.World = TERM.emit(TERM.string("world"), ()=> "WOOORLD")
 TERM.maybe(TERM.World)("worsld").d
 TERM.World("worsld").d
 */
-
+/*
 TERM.Greeting = TERM.list([
 	TERM.emit(TERM.string("greet"), () => "YIYIYI"),
 	TERM.string(" "),
@@ -61,5 +61,11 @@ TERM.Greeting = TERM.list([
 ])
 TERM.Greeting("greet wdorld").d
 TERM.Greeting("greet world").d
+*/
+
+TERM.or([
+	TERM.string("hello"),
+	TERM.string("hi"),
+])("hi").d
 
 </script>
