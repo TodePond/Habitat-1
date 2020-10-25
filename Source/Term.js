@@ -110,32 +110,35 @@ TERM = {}
 		return self
 	}
 	
-	TERM.list = (terms) => (input) => {
+	TERM.list = (terms) => {
+		const self = (input) => {
 		
-		const headResult = terms[0](input)
-		if (!headResult.success) {
-			const arg = [headResult.arg]
-			return TERM.fail({tail: input}, arg)
+			const headResult = terms[0](input)
+			if (!headResult.success) {
+				const child = [headResult]
+				return TERM.fail({tail: input, term: self}, child)
+			}
+			
+			if (terms.length <= 1) {
+				const {tail, source} = headResult
+				const child = [headResult]
+				return TERM.succeed({tail, source, term: self}, child)
+			}
+			
+			const tailResult = TERM.list(terms.slice(1))(headResult.tail)
+			if (!tailResult.success) {
+				const source = headResult.source + (tailResult.source === undefined? "" : tailResult.source)
+				const child = [headResult, ...tailResult.child]
+				return TERM.fail({tail: input, source, term: self}, child)
+			}
+			
+			const tail = tailResult.tail
+			const source = headResult.source + tailResult.source
+			const child = [headResult, ...tailResult.child]
+			return TERM.succeed({tail, source, term: self}, child)
+			
 		}
-		
-		if (terms.length <= 1) {
-			const {tail, source} = headResult
-			const arg = [headResult.arg]
-			return TERM.succeed({tail, source}, arg)
-		}
-		
-		const tailResult = TERM.list(terms.slice(1))(headResult.tail)
-		if (!tailResult.success) {
-			const source = headResult.source + (tailResult.source === undefined? "" : tailResult.source)
-			const arg = [headResult.arg, ...tailResult.arg]
-			return TERM.fail({tail: input, source}, arg)
-		}
-		
-		const tail = tailResult.tail
-		const source = headResult.source + tailResult.source
-		const arg = [headResult.arg, ...tailResult.arg]
-		return TERM.succeed({tail, source}, arg)
-		
+		return self
 	}
 	
 	TERM.or = (terms) => {
