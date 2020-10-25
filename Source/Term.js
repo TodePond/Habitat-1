@@ -101,10 +101,13 @@ TERM = {}
 		return self
 	}
 	
-	TERM.maybe = (term) => (input) => {
-		const result = term(input)
-		const {tail, source, arg} = result
-		return TERM.succeed({tail, source, source}, arg)
+	TERM.maybe = (term) => {
+		const self = (input) => {
+			const result = term(input)
+			const {tail, source} = result
+			return TERM.succeed({tail, source, source, term: self}, result)
+		}
+		return self
 	}
 	
 	TERM.list = (terms) => (input) => {
