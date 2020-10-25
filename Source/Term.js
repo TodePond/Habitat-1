@@ -86,36 +86,18 @@ TERM = {}
 		return TERM.succeed({tail, source}, arg)
 	}
 	
+	TERM.maybe = (term) => (input) => {
+		const result = term(input)
+		if (!result.success) {
+			return TERM.succeed({...result, success: true, source: ""})
+		}
+		return result
+	}
+	
 	//====================//
 	// Control Structures //
 	//====================//
-	/*TERM.many = (func, ...excess) => {
-	
-		// Check args
-		if (!func.is(Function)) throw new Error(`[Eat] TERM.many expects a function as its only argument. Instead, received a '${typeof func}'`)
-		if (excess.length > 0) throw new Error(`[Eat] TERM.many expects a function as its only argument. Instead, received ${excess.length + 1} arguments`)
-		
-		return (source, args) => {
-		
-			// Buffers
-			let success = undefined
-			let code = source
-			
-			// Head
-			let headResult = undefined
-			headResult = {success, code} = func(code, args)
-			if (!success) return {...headResult, code: source}
-			
-			// Tail
-			let tailResult = undefined
-			tailResult = {success, code} = TERM.many(func)(code, args)
-			if (!success) return headResult
-			tailResult.snippet = headResult.snippet + tailResult.snippet
-			return tailResult
-		}
-	}*/
-	
-	TERM.maybe = (func, ...excess) => {
+	/*TERM.maybe = (func, ...excess) => {
 	
 		if (!func.is(Function)) throw new Error(`[Eat] TERM.maybe expects a function as its only argument. Instead, received a '${typeof func}'`)
 		if (excess.length > 0) throw new Error(`[Eat] TERM.maybe expects a function as its only argument. Instead, received ${excess.length + 1} arguments`)
@@ -134,7 +116,7 @@ TERM = {}
 			
 			return result
 		}
-	}
+	}*/
 	
 	TERM.list = (...funcs) => {
 	

@@ -43,9 +43,12 @@ TERM.Greet = TERM.emit(
 
 //TERM.Greet("g").d
 
-TERM.emit(
+/*TERM.emit(
 	TERM.many(TERM.Greet),
 	([g, b]) => g.output + b.output
-)("gb").d
+)("gb").d*/
+
+TERM.World = TERM.maybe(TERM.string("world"))
+TERM.World("world").d
 
 </script>
