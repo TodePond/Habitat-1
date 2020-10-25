@@ -40,6 +40,7 @@ TERM = {}
 			}
 			return TERM.fail({tail: input, term: self})
 		}
+		self.string = string
 		return self
 	}
 	
@@ -58,6 +59,7 @@ TERM = {}
 			}
 			return TERM.fail({tail: input, term: self})
 		}
+		self.regex = regex
 		return self
 	}
 	
@@ -74,6 +76,8 @@ TERM = {}
 			}
 			return TERM.fail({tail: input, term: self})
 		}
+		self.term = term
+		self.func = func
 		return self
 	}
 	
@@ -98,6 +102,7 @@ TERM = {}
 			const child = [headResult, ...tailResult.child]
 			return TERM.succeed({tail, source, term: self}, child)
 		}
+		self.term = term
 		return self
 	}
 	
@@ -107,6 +112,7 @@ TERM = {}
 			const {tail, source} = result
 			return TERM.succeed({tail, source, source, term: self}, result)
 		}
+		self.term = term
 		return self
 	}
 	
@@ -138,6 +144,7 @@ TERM = {}
 			return TERM.succeed({tail, source, term: self}, child)
 			
 		}
+		self.terms = terms
 		return self
 	}
 	
@@ -154,38 +161,20 @@ TERM = {}
 			}
 			return TERM.fail({tail: input, term: self}, children)
 		}
+		self.terms = terms
 		return self
+	}
+	
+	TERM.without = function* (terms, term) {
+		for (const t of terms) {
+			if (t !== term) yield t
+		}
 	}
 	
 	//====================//
 	// Control Structures //
 	//====================//	
-	/*TERM.or = (...funcs) => {
-		for (const func of funcs) if (!func.is(Function)) {
-			throw new Error(`[Eat] TERM.or expects all arguments to be functions, but received a '${typeof func}'`)
-		}
-		return TERM.orDynamic(funcs)
-	}*/
-	
-	TERM.orDynamic = (funcs, ...excess) => {
-		
-		if (excess.length > 0) throw new Error(`[Eat] TERM.orDynamic expects an array of functions as its only argument. Instead, received ${excess.length + 1} arguments`)
-		for (const func of funcs) if (!func.is(Function)) {
-			throw new Error(`[Eat] TERM.orDynamic expects all arguments to be functions, but received a '${typeof func}'`)
-		}
-		
-		return (source, args = {without: []}) => {
-			const {without} = args
-			for (const func of funcs) {
-				if (without.includes(func)) continue
-				const result = func(source, args)
-				if (result.success) return result
-			}
-			return TERM.fail(source)
-		}
-	}
-	
-	TERM.without = (func, without, ...excess) => {
+	/*TERM.without = (func, without, ...excess) => {
 	
 		if (!func.is(Function)) throw new Error(`[Eat] TERM.without expects the first argument to be a function. Instead, received a '${typeof func}'`)
 		if (!without.is(Array.of(Function))) throw new Error(`[Eat] TERM.without expects the second argument to be an array of functions. Instead, received a '${without.dir}'`)
@@ -194,7 +183,7 @@ TERM = {}
 		return (source, args) => {
 			return func(source, {...args, without: [...args.without, ...without]})
 		}
-	}
+	}*/
 	
 	TERM.and = (...funcs) => {
 	
