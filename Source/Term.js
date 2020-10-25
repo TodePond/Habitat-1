@@ -138,17 +138,20 @@ TERM = {}
 		
 	}
 	
-	TERM.or = (terms) => (input) => {
-		const args = []
-		for (const term of terms) {
-			const result = term(input)
-			args.push(result.arg)
-			if (result.success) {
-				const {tail, source} = result
-				return TERM.succeed({tail, source}, args)
+	TERM.or = (terms) => {
+		const self = (input) => {
+			const children = []
+			for (const term of terms) {
+				const result = term(input)
+				children.push(result)
+				if (result.success) {
+					const {tail, source} = result
+					return TERM.succeed({tail, source, term: self}, children)
+				}
 			}
+			return TERM.fail({tail: input, term: self}, children)
 		}
-		return TERM.fail({tail: input}, args)
+		return self
 	}
 	
 	//====================//
