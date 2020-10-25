@@ -1693,31 +1693,93 @@ EAT = {}
 
 //==== Source/Term.js ====//
 ;
-//
-// 'success'
-// true if the desired thing was found
-//
-// 'source'
-// the desired thing
-//
-// 'tail'
-// the rest of the code (with the desired thing removed)
-//
-// 'emission'
-// the generated value
-//
+// Most TERM functions follow this structure
+// They expect an input, and return an object with four properties
+// (input) => {success, source, head, tail, output}
 
 TERM = {}
 
 {
-
-	TERM.succeed = (source, tail, emission) => ({success: true, source, tail, emission})
-	TERM.fail = (tail) => ({success: false, source: undefined, tail, emission: undefined})
+	//======//
+	// Meta //
+	//======//
+	TERM.succeed = ({tail, source, output}) => ({
+		success: true,
+		tail,
+		source,
+		output,
+	})
+	
+	TERM.fail = ({tail, source, output}) => ({
+		success: false,
+		tail,
+		source,
+		output,
+	})
+	
+	//===========//
+	// Primitive //
+	//===========//
+	TERM.string = (string) => (input) => {
+		const success = input.slice(0, string.length) == string
+		if (success) {
+			const tail = input.slice(string.length)
+			const source = string
+			return TERM.succeed({tail, source})
+		}
+		return TERM.fail({tail: input})
+	}
+	
+	TERM.regexp = TERM.regExp = TERM.regex = TERM.regEx = (regex) => (input) => {
+		const fullRegex = new RegExp("^" + regex.source + "$")
+		let i = 0
+		while (i <= input.length) {
+			const source = input.slice(0, i)
+			const success = fullRegex.test(source)
+			if (success) {
+				const tail = input.slice(source.length)
+				return TERM.succeed({tail, source})
+			}
+			i++
+		}
+		return TERM.fail({tail: input})
+	}
+	
+	//=========//
+	// Control //
+	//=========//
+	TERM.emit = (term, func) => (input) => {
+		const result = term(input)
+		if (result.success) {
+			const output = func(result)
+			return TERM.succeed({...result, output})
+		}
+		return TERM.fail({tail: input})
+	}
+	
+	TERM.many = (term) => (input) => {
+		
+		const headResult = term(input)
+		if (!headResult.success) {
+			return TERM.fail({tail: input})
+		}
+		
+		const tailResult = TERM.many(term)(headResult.tail)
+		if (!tailResult.success) {
+			const tail = headResult.tail
+			const source = headResult.source
+			return TERM.succeed({tail, source})
+		}
+		
+		const tail = tailResult.tail
+		const source = tailResult.source + headResult.source
+		return TERM.succeed({tail, source})
+	}
 	
 	//====================//
 	// Control Structures //
 	//====================//
-	TERM.many = (func, ...excess) => {
+	/*TERM.many = (func, ...excess) => {
 	
 		// Check args
 		if (!func.is(Function)) throw new Error(`[Eat] TERM.many expects a function as its only argument. Instead, received a '${typeof func}'`)
@@ -1741,7 +1803,7 @@ TERM = {}
 			tailResult.snippet = headResult.snippet + tailResult.snippet
 			return tailResult
 		}
-	}
+	}*/
 	
 	TERM.maybe = (func, ...excess) => {
 	
@@ -1860,34 +1922,6 @@ TERM = {}
 	TERM.ref = TERM.reference
 	
 	TERM.eof = TERM.endOfFile = (source) => ({success: source.length == 0, snippet: "", code: source})
-	
-	TERM.string = (string) => (source) => {
-		const success = source.slice(0, string.length) == string
-		const snippet = success? string : undefined
-		const code = success? source.slice(string.length) : source
-		return {success, snippet, code}
-	}
-	
-	TERM.regexp = TERM.regExp = TERM.regex = TERM.regEx = (regex) => (source) => {
-		const fullRegex = new RegExp("^" + regex.source + "$")
-		
-		let i = 0
-		while (i <= source.length) {
-			const snippet = source.slice(0, i)
-			const success = fullRegex.test(snippet)
-			if (success) {
-				const code = source.slice(snippet.length)
-				return {success, snippet, code}
-			}
-			i++
-		}
-		
-		const success = false
-		const snippet = undefined
-		const code = source
-		return {success, snippet, code}
-		
-	}
 	
 	//====================//
 	// In-Built Functions //
