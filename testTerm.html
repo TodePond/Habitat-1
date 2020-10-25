@@ -36,12 +36,16 @@
 
 <script>
 
+//TERM.regexp(/hello/)("hello world").d
+
+
 TERM.Greet = TERM.emit(
-	TERM.regexp(/\w/),
+	TERM.regexp(/world/),
 	(t) => "Hello " + t.source,
 )
 
-//TERM.Greet("g").d
+TERM.Greet("world").d
+
 /*
 TERM.emit(
 	TERM.many(TERM.Greet),
@@ -62,10 +66,10 @@ TERM.Greeting = TERM.list([
 TERM.Greeting("greet wdorld").d
 TERM.Greeting("greet world").d
 */
-
+/*
 TERM.or([
 	TERM.string("hello"),
 	TERM.string("hi"),
-])("hi").d
+])("fff").d*/
 
 </script>

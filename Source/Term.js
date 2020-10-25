@@ -9,21 +9,31 @@ TERM = {}
 	//======//
 	// Meta //
 	//======//
-	TERM.succeed = ({tail, source, output}, arg = {success: true, tail, source, output}) => ({
-		success: true,
-		tail,
-		source,
-		output,
-		arg,
-	})
+	TERM.succeed = ({tail, source, output, term}, child) => {
+		const result = {
+			success: true,
+			tail,
+			source,
+			output,
+			term,
+			child,
+		}
+		//if (child === undefined) result.child = result
+		return result
+	}
 	
-	TERM.fail = ({tail, source, output}, arg = {success: false, tail, source, output}) => ({
-		success: false,
-		tail,
-		source,
-		output,
-		arg,
-	})
+	TERM.fail = ({tail, source, output, term}, child) => {
+		const result = {
+			success: false,
+			tail,
+			source,
+			output,
+			term,
+			child,
+		}
+		//if (child === undefined) result.child = result
+		return result
+	}
 	
 	//===========//
 	// Primitive //
@@ -59,8 +69,8 @@ TERM = {}
 	TERM.emit = (term, func) => (input) => {
 		const result = term(input)
 		if (result.success) {
-			const output = func(result.arg)
-			return TERM.succeed({...result, output})
+			const output = func(result)
+			return TERM.succeed({...result, output}, result)
 		}
 		return TERM.fail({tail: input})
 	}
@@ -121,14 +131,16 @@ TERM = {}
 	}
 	
 	TERM.or = (terms) => (input) => {
+		const args = []
 		for (const term of terms) {
 			const result = term(input)
+			args.push(result.arg)
 			if (result.success) {
-				const {tail, source, arg} = result
-				return TERM.succeed({tail, source}, arg)
+				const {tail, source} = result
+				return TERM.succeed({tail, source}, args)
 			}
 		}
-		return TERM.fail({tail: input})
+		return TERM.fail({tail: input}, args)
 	}
 	
 	//====================//
