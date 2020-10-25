@@ -92,7 +92,7 @@
 		update() {
 			const descriptor = this.createDescriptor()
 			Reflect.defineProperty(this.object, this.propertyName, descriptor)
-			this.checkType()
+			//this.checkType() //TODO: do this in only more specific cases
 		}
 		
 		readDescriptor({value, get, set, type, writable, enumerable, configurable, typeCheck}) {
