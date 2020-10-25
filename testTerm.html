@@ -78,7 +78,7 @@ TERM.or([
 	TERM.string("hi"),
 ])("hello").d
 */
-
+/*
 TERM.Three = TERM.string("3")
 TERM.Six = TERM.string("6")
 TERM.SixtySeven = TERM.string("67")
@@ -89,5 +89,11 @@ TERM.Number = TERM.or([
 ])
 TERM.Number("67").d
 TERM.or(TERM.without(TERM.Number.terms, TERM.Six))("67").d
+*/
+
+TERM.YoYo = TERM.many(TERM.term("Yo").d)
+TERM.Yo = TERM.string("yo")
+
+TERM.YoYo("yoyoyoyoyo").d
 
 </script>

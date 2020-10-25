@@ -165,47 +165,32 @@ TERM = {}
 		return self
 	}
 	
+	//=======//
+	// Terms //
+	//=======//
 	TERM.without = function* (terms, term) {
 		for (const t of terms) {
 			if (t !== term) yield t
 		}
 	}
 	
+	TERM.cache = {}
+	TERM.term = (name) => {
+		if (TERM.cache[name] !== undefined) return TERM.cache[name]
+		
+		const func = (...args) => TERM[name](...args)
+		func._.terms.get = () => TERM[name] === undefined? undefined : TERM[name].terms
+		func._.term.get = () => TERM[name] === undefined? undefined : TERM[name].term
+		func._.func.get = () => TERM[name] === undefined? undefined : TERM[name].func
+		func._.regex.get = () => TERM[name] === undefined? undefined : TERM[name].regex
+		func._.string.get = () => TERM[name] === undefined? undefined : TERM[name].string
+		TERM.cache[name] = func
+		return func
+	}
+	
 	//====================//
 	// Control Structures //
-	//====================//	
-	/*TERM.without = (func, without, ...excess) => {
-	
-		if (!func.is(Function)) throw new Error(`[Eat] TERM.without expects the first argument to be a function. Instead, received a '${typeof func}'`)
-		if (!without.is(Array.of(Function))) throw new Error(`[Eat] TERM.without expects the second argument to be an array of functions. Instead, received a '${without.dir}'`)
-		if (excess.length > 0) throw new Error(`[Eat] TERM.without expects 2 functions as arguments. Instead, received ${excess.length + 2} arguments`)
-		
-		return (source, args) => {
-			return func(source, {...args, without: [...args.without, ...without]})
-		}
-	}*/
-	
-	TERM.and = (...funcs) => {
-	
-		for (const func of funcs) if (!func.is(Function)) {
-			throw new Error(`[Eat] TERM.and expects all arguments to be functions, but received a '${typeof func}'`)
-		}
-	
-		return (source, args) => {
-			for (const func of funcs) {
-				const result = func(source, args)
-				if (!result.success) return TERM.fail(source)
-			}
-			return TERM.succeed(source)
-		}
-	}
-	
-	TERM.not = (func) => (source, args) => {
-		const result = func(source, args)
-		if (result.success) return TERM.fail(source)
-		else return {...result, success: true}
-	}
-	
+	//====================//
 	const referenceCache = {}
 	TERM.reference = (funcName) => {
 		if (referenceCache[funcName] != undefined) return referenceCache[funcName]
