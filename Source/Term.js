@@ -101,7 +101,7 @@ TERM = {}
 		return self
 	}
 	
-	TERM.maybe = (term) => (input) => {a
+	TERM.maybe = (term) => (input) => {
 		const result = term(input)
 		const {tail, source, arg} = result
 		return TERM.succeed({tail, source, source}, arg)
