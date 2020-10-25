@@ -44,9 +44,9 @@ TERM = {}
 		return self
 	}
 	
-	TERM.regexp = TERM.regExp = TERM.regex = TERM.regEx = (regex) => {
+	TERM.regexp = TERM.regExp = TERM.regex = TERM.regEx = (regexp) => {
 		const self = (input) => {
-			const fullRegex = new RegExp("^" + regex.source + "$")
+			const fullRegex = new RegExp("^" + regexp.source + "$")
 			let i = 0
 			while (i <= input.length) {
 				const source = input.slice(0, i)
@@ -59,7 +59,7 @@ TERM = {}
 			}
 			return TERM.fail({tail: input, term: self})
 		}
-		self.regex = regex
+		self.regexp = regexp
 		return self
 	}
 	
@@ -189,7 +189,7 @@ TERM = {}
 		func._.terms.get = () => TERM[name] === undefined? undefined : TERM[name].terms
 		func._.term.get = () => TERM[name] === undefined? undefined : TERM[name].term
 		func._.func.get = () => TERM[name] === undefined? undefined : TERM[name].func
-		func._.regex.get = () => TERM[name] === undefined? undefined : TERM[name].regex
+		func._.regexp.get = () => TERM[name] === undefined? undefined : TERM[name].regexp
 		func._.string.get = () => TERM[name] === undefined? undefined : TERM[name].string
 		TERM.cache[name] = func
 		return func
@@ -209,24 +209,24 @@ TERM = {}
 		])
 	)
 	
-	TERM.ws = TERM.whitespace = TERM.whiteSpace = TERM.many (
-		TERM.or (
+	TERM.ws = TERM.whitespace = TERM.whiteSpace = TERM.many(
+		TERM.or([
 			TERM.space,
 			TERM.tab,
 			TERM.newline,
-		)
+		])
 	)
 	
-	TERM.name = TERM.list (
+	TERM.name = TERM.list ([
 		TERM.regexp(/[a-zA-Z_$]/),
-		TERM.many(TERM.regex(/[a-zA-Z0-9_$]/))
-	)
+		TERM.many(TERM.regexp(/[a-zA-Z0-9_$]/))
+	])
 	
-	TERM.margin = TERM.or (
+	TERM.margin = TERM.or([
 		TERM.many(TERM.tab),
 		TERM.many(TERM.space),
-	)
+	])
 	
-	TERM.line = TERM.many(TERM.regex(/[^\n]/))
+	TERM.line = TERM.many(TERM.regexp(/[^\n]/))
 	
 }
