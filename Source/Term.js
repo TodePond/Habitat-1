@@ -17,7 +17,7 @@ TERM = {}
 		arg,
 	})
 	
-	TERM.fail = ({tail, source, output}, arg = {success: true, tail, source, output}) => ({
+	TERM.fail = ({tail, source, output}, arg = {success: false, tail, source, output}) => ({
 		success: false,
 		tail,
 		source,
@@ -74,8 +74,7 @@ TERM = {}
 		
 		const tailResult = TERM.many(term)(headResult.tail)
 		if (!tailResult.success) {
-			const tail = headResult.tail
-			const source = headResult.source
+			const {tail, source} = headResult
 			const arg = [headResult.arg]
 			return TERM.succeed({tail, source}, arg)
 		}
@@ -88,37 +87,39 @@ TERM = {}
 	
 	TERM.maybe = (term) => (input) => {
 		const result = term(input)
-		if (!result.success) {
-			return TERM.succeed({...result, success: true, source: ""})
+		const {tail, source, arg} = result
+		return TERM.succeed({tail, source, source}, arg)
+	}
+	
+	TERM.list = (terms) => (input) => {
+		
+		const headResult = terms[0](input)
+		if (!headResult.success) {
+			return TERM.fail({tail: input})
 		}
-		return result
+		
+		if (terms.length <= 1) {
+			const {tail, source} = headResult
+			const arg = [headResult.arg]
+			return TERM.succeed({tail, source}, arg)
+		}
+		
+		const tailResult = TERM.list(terms.slice(1))(headResult.tail)
+		if (!tailResult.success) {
+			return TERM.fail({tail: input})
+		}
+		
+		const tail = tailResult.tail
+		const source = headResult.source + tailResult.source
+		const arg = [headResult.arg, ...tailResult.arg]
+		return TERM.succeed({tail, source}, arg)
+		
 	}
 	
 	//====================//
 	// Control Structures //
-	//====================//
-	/*TERM.maybe = (func, ...excess) => {
-	
-		if (!func.is(Function)) throw new Error(`[Eat] TERM.maybe expects a function as its only argument. Instead, received a '${typeof func}'`)
-		if (excess.length > 0) throw new Error(`[Eat] TERM.maybe expects a function as its only argument. Instead, received ${excess.length + 1} arguments`)
-		
-		return (source, args) => {
-		
-			let result = undefined
-			let success = undefined
-			let code = source
-			
-			result = {success, code} = func(code, args)
-			if (!success) {
-				result.success = true
-				result.snippet = ""
-			}
-			
-			return result
-		}
-	}*/
-	
-	TERM.list = (...funcs) => {
+	//====================//	
+	/*TERM.list = (...funcs) => {
 	
 		for (const func of funcs) if (!func.is(Function)) {
 			throw new Error(`[Eat] TERM.list expects all arguments to be functions, but received a '${typeof func}'`)
@@ -145,7 +146,7 @@ TERM = {}
 			tailResult.snippet = headResult.snippet + tailResult.snippet
 			return tailResult
 		}
-	}
+	}*/
 	
 	TERM.or = (...funcs) => {
 		for (const func of funcs) if (!func.is(Function)) {
