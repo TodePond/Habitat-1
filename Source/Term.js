@@ -165,6 +165,13 @@ TERM = {}
 		return self
 	}
 	
+	TERM.eof = TERM.endOfFile = (input) => {
+		if (input.length === 0) {
+			return TERM.succeed({term: TERM.eof, source: ""})
+		}
+		return TERM.fail({term: TERM.eof})
+	}
+	
 	//=======//
 	// Terms //
 	//=======//
@@ -187,20 +194,6 @@ TERM = {}
 		TERM.cache[name] = func
 		return func
 	}
-	
-	//====================//
-	// Control Structures //
-	//====================//
-	const referenceCache = {}
-	TERM.reference = (funcName) => {
-		if (referenceCache[funcName] != undefined) return referenceCache[funcName]
-		const func = (source, args) => TERM[funcName](source, args)
-		referenceCache[funcName] = func
-		return func
-	}
-	TERM.ref = TERM.reference
-	
-	TERM.eof = TERM.endOfFile = (source) => ({success: source.length == 0, snippet: "", code: source})
 	
 	//====================//
 	// In-Built Functions //

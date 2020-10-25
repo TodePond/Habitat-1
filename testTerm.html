@@ -90,10 +90,17 @@ TERM.Number = TERM.or([
 TERM.Number("67").d
 TERM.or(TERM.without(TERM.Number.terms, TERM.Six))("67").d
 */
-
-TERM.YoYo = TERM.many(TERM.term("Yo").d)
+/*
+TERM.YoYo = TERM.many(TERM.term("Yo"))
 TERM.Yo = TERM.string("yo")
-
 TERM.YoYo("yoyoyoyoyo").d
+*/
+
+TERM.eof("").d
+TERM.eof("s").d
+TERM.list([
+	TERM.string("hello"),
+	TERM.eof,
+])("hello").d
 
 </script>
