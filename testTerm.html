@@ -41,8 +41,11 @@ TERM.Greet = TERM.emit(
 	(t) => "Hello " + t.source,
 )
 
-TERM.Greet("g").d
+//TERM.Greet("g").d
 
-//TERM.many(TERM.Greet)("g").d
+TERM.emit(
+	TERM.many(TERM.Greet),
+	([g, b]) => g.output + b.output
+)("gb").d
 
 </script>

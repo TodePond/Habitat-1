@@ -9,18 +9,20 @@ TERM = {}
 	//======//
 	// Meta //
 	//======//
-	TERM.succeed = ({tail, source, output}) => ({
+	TERM.succeed = ({tail, source, output}, arg = {success: true, tail, source, output}) => ({
 		success: true,
 		tail,
 		source,
 		output,
+		arg,
 	})
 	
-	TERM.fail = ({tail, source, output}) => ({
+	TERM.fail = ({tail, source, output}, arg = {success: true, tail, source, output}) => ({
 		success: false,
 		tail,
 		source,
 		output,
+		arg,
 	})
 	
 	//===========//
@@ -57,7 +59,7 @@ TERM = {}
 	TERM.emit = (term, func) => (input) => {
 		const result = term(input)
 		if (result.success) {
-			const output = func(result)
+			const output = func(result.arg)
 			return TERM.succeed({...result, output})
 		}
 		return TERM.fail({tail: input})
@@ -74,12 +76,14 @@ TERM = {}
 		if (!tailResult.success) {
 			const tail = headResult.tail
 			const source = headResult.source
-			return TERM.succeed({tail, source})
+			const arg = [headResult.arg]
+			return TERM.succeed({tail, source}, arg)
 		}
 		
 		const tail = tailResult.tail
-		const source = tailResult.source + headResult.source
-		return TERM.succeed({tail, source})
+		const source = headResult.source + tailResult.source
+		const arg = [headResult.arg, ...tailResult.arg]
+		return TERM.succeed({tail, source}, arg)
 	}
 	
 	//====================//
