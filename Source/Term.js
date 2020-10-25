@@ -202,11 +202,11 @@ TERM = {}
 	TERM.tab = TERM.string("	")
 	TERM.newline = TERM.newLine = TERM.string("\n")
 	
-	TERM.gap = TERM.many (
-		TERM.or (
+	TERM.gap = TERM.many(
+		TERM.or([
 			TERM.space,
 			TERM.tab,
-		)
+		])
 	)
 	
 	TERM.ws = TERM.whitespace = TERM.whiteSpace = TERM.many (
