@@ -37,7 +37,7 @@
 <script>
 
 
-const N = ([input]) => TERM.NumberWordSource(input).output
+const NumberTode = ([input]) => TERM.NumberWordSource(input).output
 
 TERM.NumberWordSource = TERM.emit(
 	TERM.list([
@@ -51,11 +51,46 @@ TERM.NumberWordSource = TERM.emit(
 
 TERM.NumberWord = TERM.emit(
 	TERM.or([
+		TERM.term("HundredsWord"),
 		TERM.term("TeensWord"),
 		TERM.term("TensWord"),
 		TERM.term("OnesWord"),
 	]),
 	(terms) => terms.last.output
+)
+
+TERM.HundredsWord = TERM.emit(
+	TERM.list([
+		TERM.term("Hundreds"),
+		TERM.emit(
+			TERM.maybe(
+				TERM.emit(
+					TERM.list([
+						TERM.string(" and "),
+						TERM.emit(
+							TERM.or([
+								TERM.term("TeensWord"),
+								TERM.term("TensWord"),
+								TERM.term("OnesWord"),
+							]),
+							(terms) => (terms.last.term === TERM.OnesWord? "0" : "") + terms.last.output,
+						),
+					]),
+					([_, term]) => term.output,
+				)
+			),
+			(term) => term.success? term.output : "00",
+		),
+	]),
+	(terms) => terms.map(term => term.output || "").join(""),
+)
+
+TERM.Hundreds = TERM.emit(
+	TERM.list([
+		TERM.term("OnesWord"),
+		TERM.string(" hundred"),
+	]),
+	([hundreds]) => hundreds.output,
 )
 
 TERM.TensWord = TERM.emit(
