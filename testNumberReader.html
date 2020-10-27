@@ -37,7 +37,7 @@
 <script>
 
 
-const NumberTode = ([input]) => TERM.NumberWordSource(input).output
+const NumberTode = ([input]) => parseFloat(TERM.NumberWordSource(input).output)
 
 TERM.NumberWordSource = TERM.emit(
 	TERM.list([
@@ -50,13 +50,24 @@ TERM.NumberWordSource = TERM.emit(
 )
 
 TERM.NumberWord = TERM.emit(
-	TERM.or([
-		TERM.term("HundredsWord"),
-		TERM.term("TeensWord"),
-		TERM.term("TensWord"),
-		TERM.term("OnesWord"),
+	TERM.list([
+		TERM.emit(
+			TERM.or([
+				TERM.term("HundredsWord"),
+				TERM.term("TeensWord"),
+				TERM.term("TensWord"),
+				TERM.term("OnesWord"),
+			]),
+			(terms) => terms.last.output,
+		),
+		TERM.maybe(
+			TERM.list([
+				TERM.string(" point"),
+				TERM.many(TERM.list([TERM.string(" "), TERM.or([TERM.term("Zero"), TERM.term("Ones")])])),
+			])
+		)
 	]),
-	(terms) => terms.last.output
+	([int, decimal]) => int.output + (!(decimal.child.success)? "" : "." + decimal.child.child[1].child.map(d => d.child[1].child[1].output).join("")), 
 )
 
 TERM.HundredsWord = TERM.emit(
