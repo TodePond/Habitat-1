@@ -95,7 +95,7 @@ TERM = {}
 				child.term = self
 				child.output = output
 				child.source = source
-				return TERM.fail({tail: input, term: self}, child)
+				return TERM.fail({tail, source, output, term: self}, child)
 			}
 			
 			const tailResult = TERM.many(term)(headResult.tail)
@@ -140,27 +140,48 @@ TERM = {}
 		
 			const headResult = terms[0](input)
 			if (!headResult.success) {
+				const tail = input
+				const {source, output} = headResult
 				const child = [headResult]
-				return TERM.fail({tail: input, term: self}, child)
+				child.tail = tail
+				child.source = source
+				child.output = output
+				child.term = self
+				return TERM.fail({tail, source, output, term: self}, child)
 			}
 			
 			if (terms.length <= 1) {
-				const {tail, source} = headResult
+				const {tail, source, output} = headResult
 				const child = [headResult]
-				return TERM.succeed({tail, source, term: self}, child)
+				child.tail = tail
+				child.source = source
+				child.output = output
+				child.term = self
+				return TERM.succeed({tail, source, output, term: self}, child)
 			}
 			
 			const tailResult = TERM.list(terms.slice(1))(headResult.tail)
 			if (!tailResult.success) {
+				const tail = input
 				const source = headResult.source + (tailResult.source === undefined? "" : tailResult.source)
+				const output = headResult.output + (tailResult.output === undefined? "" : tailResult.output)
 				const child = [headResult, ...tailResult.child]
-				return TERM.fail({tail: input, source, term: self}, child)
+				child.source = source
+				child.term = self
+				child.tail = tail
+				child.output = output
+				return TERM.fail({tail, source, output, term: self}, child)
 			}
 			
 			const tail = tailResult.tail
-			const source = headResult.source + tailResult.source
+			const source = `${headResult.source}${tailResult.source}`
+			const output = `${headResult.output}${tailResult.output}`
 			const child = [headResult, ...tailResult.child]
-			return TERM.succeed({tail, source, term: self}, child)
+			child.tail = tail
+			child.source = source
+			child.output = output
+			child.term = self
+			return TERM.succeed({tail, source, output, term: self}, child)
 			
 		}
 		self.terms = terms
