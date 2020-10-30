@@ -1730,7 +1730,8 @@ TERM = {}
 			if (success) {
 				const tail = input.slice(string.length)
 				const source = string
-				return TERM.succeed({tail, source, term: self})
+				const output = string
+				return TERM.succeed({tail, source, output, term: self})
 			}
 			return TERM.fail({tail: input, term: self})
 		}
@@ -1747,7 +1748,8 @@ TERM = {}
 				const success = fullRegex.test(source)
 				if (success) {
 					const tail = input.slice(source.length)
-					return TERM.succeed({tail, source, term: self})
+					const output = source
+					return TERM.succeed({tail, source, output, term: self})
 				}
 				i++
 			}
@@ -1780,21 +1782,36 @@ TERM = {}
 		
 			const headResult = term(input)
 			if (!headResult.success) {
+				const tail = input
+				const {source, output} = headResult
 				const child = [headResult]
-				return TERM.fail({tail: input, term: self}, child)
+				child.tail = input
+				child.term = self
+				child.output = output
+				child.source = source
+				return TERM.fail({tail, source, output, term: self}, child)
 			}
 			
 			const tailResult = TERM.many(term)(headResult.tail)
 			if (!tailResult.success) {
-				const {tail, source} = headResult
+				const {tail, source, output} = headResult
 				const child = [headResult]
-				return TERM.succeed({tail, source, term: self}, child)
+				child.tail = tail
+				child.source = source
+				child.output = output
+				child.term = self
+				return TERM.succeed({tail, source, output, term: self}, child)
 			}
 			
 			const tail = tailResult.tail
-			const source = headResult.source + tailResult.source
+			const source = `${headResult.source}${tailResult.source}`
+			const output = `${headResult.output}${tailResult.output}`
 			const child = [headResult, ...tailResult.child]
-			return TERM.succeed({tail, source, term: self}, child)
+			child.source = source
+			child.tail = tail
+			child.output = output
+			child.term = self
+			return TERM.succeed({tail, source, output, term: self}, child)
 		}
 		self.term = term
 		return self
@@ -1805,7 +1822,8 @@ TERM = {}
 			const result = term(input)
 			const tail = result.tail
 			const source = result.source === undefined? "" : result.source
-			return TERM.succeed({tail, source, term: self}, result)
+			const output = result.output === undefined? "" : result.output
+			return TERM.succeed({tail, source, output, term: self}, result)
 		}
 		self.term = term
 		return self
@@ -1816,27 +1834,48 @@ TERM = {}
 		
 			const headResult = terms[0](input)
 			if (!headResult.success) {
+				const tail = input
+				const {source, output} = headResult
 				const child = [headResult]
-				return TERM.fail({tail: input, term: self}, child)
+				child.tail = tail
+				child.source = source
+				child.output = output
+				child.term = self
+				return TERM.fail({tail, source, output, term: self}, child)
 			}
 			
 			if (terms.length <= 1) {
-				const {tail, source} = headResult
+				const {tail, source, output} = headResult
 				const child = [headResult]
-				return TERM.succeed({tail, source, term: self}, child)
+				child.tail = tail
+				child.source = source
+				child.output = output
+				child.term = self
+				return TERM.succeed({tail, source, output, term: self}, child)
 			}
 			
 			const tailResult = TERM.list(terms.slice(1))(headResult.tail)
 			if (!tailResult.success) {
+				const tail = input
 				const source = headResult.source + (tailResult.source === undefined? "" : tailResult.source)
+				const output = headResult.output + (tailResult.output === undefined? "" : tailResult.output)
 				const child = [headResult, ...tailResult.child]
-				return TERM.fail({tail: input, source, term: self}, child)
+				child.source = source
+				child.term = self
+				child.tail = tail
+				child.output = output
+				return TERM.fail({tail, source, output, term: self}, child)
 			}
 			
 			const tail = tailResult.tail
-			const source = headResult.source + tailResult.source
+			const source = `${headResult.source}${tailResult.source}`
+			const output = `${headResult.output}${tailResult.output}`
 			const child = [headResult, ...tailResult.child]
-			return TERM.succeed({tail, source, term: self}, child)
+			child.tail = tail
+			child.source = source
+			child.output = output
+			child.term = self
+			return TERM.succeed({tail, source, output, term: self}, child)
 			
 		}
 		self.terms = terms
@@ -1844,16 +1883,25 @@ TERM = {}
 	}
 	
 	TERM.or = (terms) => {
-		const self = (input) => {
+		const self = (input, exception = {}) => {
 			const children = []
 			for (const term of terms) {
+				if (term === exception) continue
 				const result = term(input)
 				children.push(result)
 				if (result.success) {
-					const {tail, source} = result
-					return TERM.succeed({tail, source, term: self}, children)
+					const {tail, source, output} = result
+					children.tail = tail
+					children.source = source
+					children.output = output
+					children.term = self
+					return TERM.succeed({tail, source, output, term: self}, children)
 				}
 			}
+			children.term = self
+			children.source = undefined
+			children.output = undefined
+			children.tail = input
 			return TERM.fail({tail: input, term: self}, children)
 		}
 		self.terms = terms
@@ -1862,20 +1910,18 @@ TERM = {}
 	
 	TERM.eof = TERM.endOfFile = (input) => {
 		if (input.length === 0) {
-			return TERM.succeed({term: TERM.eof, source: ""})
+			return TERM.succeed({term: TERM.eof, source: "", output: ""})
 		}
 		return TERM.fail({term: TERM.eof})
 	}
 	
-	//=======//
-	// Terms //
-	//=======//
-	TERM.without = function* (terms, term) {
-		for (const t of terms) {
-			if (t !== term) yield t
-		}
+	TERM.orExcept = (orTerm, exception) => {
+		return (input) => orTerm(input, exception)
 	}
 	
+	//=======//
+	// Terms //
+	//=======//	
 	TERM.cache = {}
 	TERM.term = (name) => {
 		if (TERM.cache[name] !== undefined) return TERM.cache[name]
@@ -1886,6 +1932,7 @@ TERM = {}
 		func._.func.get = () => TERM[name] === undefined? undefined : TERM[name].func
 		func._.regexp.get = () => TERM[name] === undefined? undefined : TERM[name].regexp
 		func._.string.get = () => TERM[name] === undefined? undefined : TERM[name].string
+		func._.ref.get = () => TERM[name]
 		TERM.cache[name] = func
 		return func
 	}
