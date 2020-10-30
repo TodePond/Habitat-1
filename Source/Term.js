@@ -215,7 +215,7 @@ TERM = {}
 	
 	TERM.eof = TERM.endOfFile = (input) => {
 		if (input.length === 0) {
-			return TERM.succeed({term: TERM.eof, source: ""})
+			return TERM.succeed({term: TERM.eof, source: "", output: ""})
 		}
 		return TERM.fail({term: TERM.eof})
 	}
