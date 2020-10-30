@@ -195,10 +195,18 @@ TERM = {}
 				const result = term(input)
 				children.push(result)
 				if (result.success) {
-					const {tail, source} = result
-					return TERM.succeed({tail, source, term: self}, children)
+					const {tail, source, output} = result
+					children.tail = tail
+					children.source = source
+					children.output = output
+					children.term = self
+					return TERM.succeed({tail, source, output, term: self}, children)
 				}
 			}
+			children.term = self
+			children.source = undefined
+			children.output = undefined
+			children.tail = input
 			return TERM.fail({tail: input, term: self}, children)
 		}
 		self.terms = terms
