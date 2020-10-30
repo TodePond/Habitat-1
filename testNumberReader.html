@@ -188,9 +188,9 @@ TERM.HundredsWord = TERM.emit(
 							TERM.or([
 								TERM.term("TeensWord"),
 								TERM.term("TensWord"),
-								TERM.term("OnesWord"),
+								TERM.term("Ones"),
 							]),
-							(terms) => (terms.last.term === TERM.OnesWord? "0" : "") + terms.last.output,
+							(terms) => (terms.last.term === TERM.Ones? "0" : "") + terms.last.output,
 						),
 					]),
 					([_, term]) => term.output,
@@ -204,7 +204,7 @@ TERM.HundredsWord = TERM.emit(
 
 TERM.Hundreds = TERM.emit(
 	TERM.list([
-		TERM.term("OnesWord"),
+		TERM.term("Ones"),
 		TERM.string(" hundred"),
 	]),
 	([hundreds]) => hundreds.output,
