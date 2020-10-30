@@ -1,3 +1,66 @@
+<!DOCTYPE html>
+<head>
+	<title>NumberTode</title>
+	<meta name="viewport" content="height=device-height, width=device-width, initial-scale=1.0, user-scalable=no">
+	
+	<style>
+		
+		html, body {
+			margin: 0;
+			height: 100vh;
+			background-color: rgb(23, 29, 40);
+		}
+		
+		@font-face {
+			font-family: UbuntuMono;
+			src: url("Media/Fonts/UbuntuMono-R.ttf")
+		}
+		
+		@font-face {
+			font-family: Rosario;
+			src: url("Media/Fonts/Rosario-Regular.ttf")
+		}
+		
+		.pad {
+			color: rgb(240, 240, 240);
+			font-family: UbuntuMono;
+			font-size: 40px;
+			background-color: rgb(74, 92, 126);
+			display: inline-block;
+			padding: 30px;
+			border-radius: 40px;
+			tab-size: 4;
+			margin: 15px;
+			border: none;
+			resize: none;
+			scroll: none;
+			max-width: 80vw;
+		}
+		
+		.padHolder {
+			width: 100%;
+			/*background-color: white;*/
+		}
+		
+		.pad:focus {
+			outline: none;
+		}
+		
+		.pad.out {
+			text-align: center;
+		}
+		
+		.padHolder.out {
+			text-align: right;
+		}
+	
+	</style>
+</head>
+
+<div class="padHolder">
+	<div contenteditable id="firstBubble" class="pad in"></div>
+</div>
+
 <script src="Source/Habitat.js"></script>
 <script src="Source/Array.js"></script>
 <script src="Source/Async.js"></script>
@@ -34,7 +97,50 @@
 <script src="Source/ThirdParty/SAOShader.js"></script>
 <script src="Source/ThirdParty/SAOPass.js"></script>
 
+
+
 <script>
+
+on.keydown(function(e) {
+	const pads = $$(".pad.in")
+	const pad = pads[pads.length - 1]
+	pad.focus()
+	if (e.key == "Enter") {
+		const source = pad.textContent
+		const result = NumberTode([source])
+		pad.removeAttribute("contenteditable")
+		e.preventDefault()
+		const out = HTML `<div class="padHolder out"><div class="pad out">${result}</div></div>` //<script>
+		const inn = HTML `<div class="padHolder in"><div contenteditable class="pad in"></div></div>` //<script>
+		document.body.appendChild(out)
+		document.body.appendChild(inn)
+		focusPad()
+		resizePad(inn.lastChild)
+		resizePad(out.lastChild)
+	}
+})
+
+const focusPad = () => {
+	const pads = $$(".pad.in")
+	const pad = pads[pads.length - 1]
+	pad.focus()
+}
+
+const resizePad = (pad) => {
+	pad.style.height = "20px"
+	pad.style.height = `${pad.scrollHeight - 35}px`
+	scrollTo(0, document.body.scrollHeight)
+}
+
+on.input(function(e) {
+	const pads = $$(".pad.in")
+	const pad = pads[pads.length - 1]
+	resizePad(pad)
+})
+
+resizePad($("#firstBubble"))
+$("#firstBubble").focus()
+
 
 
 const NumberTode = ([input]) => parseFloat(TERM.NumberWordSource(input).output)
@@ -111,7 +217,7 @@ TERM.TensWord = TERM.emit(
 			TERM.maybe(
 				TERM.emit(
 					TERM.list([
-						TERM.string("-"),
+						TERM.or([TERM.string("-"), TERM.string(" ")]),
 						TERM.term("Ones"),
 					]),
 					([_, ones]) => ones.output,
