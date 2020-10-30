@@ -989,7 +989,7 @@ V.equals = (a, b) => a.x == b.x && a.y == b.y && a.z == b.z
 		update() {
 			const descriptor = this.createDescriptor()
 			Reflect.defineProperty(this.object, this.propertyName, descriptor)
-			this.checkType()
+			//this.checkType() //TODO: do this in only more specific cases
 		}
 		
 		readDescriptor({value, get, set, type, writable, enumerable, configurable, typeCheck}) {
@@ -1703,225 +1703,192 @@ TERM = {}
 	//======//
 	// Meta //
 	//======//
-	TERM.succeed = ({tail, source, output}) => ({
+	TERM.succeed = ({tail, source, output, term}, child) => ({
 		success: true,
 		tail,
 		source,
 		output,
+		term,
+		child,
 	})
 	
-	TERM.fail = ({tail, source, output}) => ({
+	TERM.fail = ({tail, source, output, term}, child) => ({
 		success: false,
 		tail,
 		source,
 		output,
+		term,
+		child,
 	})
 	
 	//===========//
 	// Primitive //
 	//===========//
-	TERM.string = (string) => (input) => {
-		const success = input.slice(0, string.length) == string
-		if (success) {
-			const tail = input.slice(string.length)
-			const source = string
-			return TERM.succeed({tail, source})
+	TERM.string = (string) => {
+		const self = (input) => {
+			const success = input.slice(0, string.length) == string
+			if (success) {
+				const tail = input.slice(string.length)
+				const source = string
+				return TERM.succeed({tail, source, term: self})
+			}
+			return TERM.fail({tail: input, term: self})
 		}
-		return TERM.fail({tail: input})
+		self.string = string
+		return self
 	}
 	
-	TERM.regexp = TERM.regExp = TERM.regex = TERM.regEx = (regex) => (input) => {
-		const fullRegex = new RegExp("^" + regex.source + "$")
-		let i = 0
-		while (i <= input.length) {
-			const source = input.slice(0, i)
-			const success = fullRegex.test(source)
-			if (success) {
-				const tail = input.slice(source.length)
-				return TERM.succeed({tail, source})
+	TERM.regexp = TERM.regExp = TERM.regex = TERM.regEx = (regexp) => {
+		const self = (input) => {
+			const fullRegex = new RegExp("^" + regexp.source + "$")
+			let i = 0
+			while (i <= input.length) {
+				const source = input.slice(0, i)
+				const success = fullRegex.test(source)
+				if (success) {
+					const tail = input.slice(source.length)
+					return TERM.succeed({tail, source, term: self})
+				}
+				i++
 			}
-			i++
+			return TERM.fail({tail: input, term: self})
 		}
-		return TERM.fail({tail: input})
+		self.regexp = regexp
+		return self
 	}
 	
 	//=========//
 	// Control //
 	//=========//
-	TERM.emit = (term, func) => (input) => {
-		const result = term(input)
-		if (result.success) {
-			const output = func(result)
-			return TERM.succeed({...result, output})
+	TERM.emit = (term, func) => {
+		const self = (input) => {
+			const result = term(input)
+			if (result.success) {
+				const {tail, source} = result
+				const output = result.child === undefined? func(result) : func(result.child)
+				return TERM.succeed({tail, source, output, term: self}, result)
+			}
+			return TERM.fail({tail: input, term: self})
 		}
-		return TERM.fail({tail: input})
+		self.term = term
+		self.func = func
+		return self
 	}
 	
-	TERM.many = (term) => (input) => {
+	TERM.many = (term) => {
+		const self = (input) => {
 		
-		const headResult = term(input)
-		if (!headResult.success) {
-			return TERM.fail({tail: input})
-		}
-		
-		const tailResult = TERM.many(term)(headResult.tail)
-		if (!tailResult.success) {
-			const tail = headResult.tail
-			const source = headResult.source
-			return TERM.succeed({tail, source})
-		}
-		
-		const tail = tailResult.tail
-		const source = tailResult.source + headResult.source
-		return TERM.succeed({tail, source})
-	}
-	
-	//====================//
-	// Control Structures //
-	//====================//
-	/*TERM.many = (func, ...excess) => {
-	
-		// Check args
-		if (!func.is(Function)) throw new Error(`[Eat] TERM.many expects a function as its only argument. Instead, received a '${typeof func}'`)
-		if (excess.length > 0) throw new Error(`[Eat] TERM.many expects a function as its only argument. Instead, received ${excess.length + 1} arguments`)
-		
-		return (source, args) => {
-		
-			// Buffers
-			let success = undefined
-			let code = source
-			
-			// Head
-			let headResult = undefined
-			headResult = {success, code} = func(code, args)
-			if (!success) return {...headResult, code: source}
-			
-			// Tail
-			let tailResult = undefined
-			tailResult = {success, code} = TERM.many(func)(code, args)
-			if (!success) return headResult
-			tailResult.snippet = headResult.snippet + tailResult.snippet
-			return tailResult
-		}
-	}*/
-	
-	TERM.maybe = (func, ...excess) => {
-	
-		if (!func.is(Function)) throw new Error(`[Eat] TERM.maybe expects a function as its only argument. Instead, received a '${typeof func}'`)
-		if (excess.length > 0) throw new Error(`[Eat] TERM.maybe expects a function as its only argument. Instead, received ${excess.length + 1} arguments`)
-		
-		return (source, args) => {
-		
-			let result = undefined
-			let success = undefined
-			let code = source
-			
-			result = {success, code} = func(code, args)
-			if (!success) {
-				result.success = true
-				result.snippet = ""
+			const headResult = term(input)
+			if (!headResult.success) {
+				const child = [headResult]
+				return TERM.fail({tail: input, term: self}, child)
 			}
 			
-			return result
-		}
-	}
-	
-	TERM.list = (...funcs) => {
-	
-		for (const func of funcs) if (!func.is(Function)) {
-			throw new Error(`[Eat] TERM.list expects all arguments to be functions, but received a '${typeof func}'`)
-		}
-		
-		return (source, args) => {
-		
-			// Buffers
-			let success = undefined
-			let code = source
-			
-			// Head
-			let headResult = undefined
-			const headFunc = funcs[0]
-			if (headFunc === undefined) return TERM.fail(source)
-			headResult = {success, code} = headFunc(code, args)
-			if (!success) return {...headResult, code: source}
-			
-			// Tail
-			let tailResult = undefined
-			const tailFuncs = funcs.slice(1)
-			if (tailFuncs.length == 0) return headResult
-			tailResult = {success, code} = TERM.list(...tailFuncs)(code, args)
-			tailResult.snippet = headResult.snippet + tailResult.snippet
-			return tailResult
-		}
-	}
-	
-	TERM.or = (...funcs) => {
-		for (const func of funcs) if (!func.is(Function)) {
-			throw new Error(`[Eat] TERM.or expects all arguments to be functions, but received a '${typeof func}'`)
-		}
-		return TERM.orDynamic(funcs)
-	}
-	
-	TERM.orDynamic = (funcs, ...excess) => {
-		
-		if (excess.length > 0) throw new Error(`[Eat] TERM.orDynamic expects an array of functions as its only argument. Instead, received ${excess.length + 1} arguments`)
-		for (const func of funcs) if (!func.is(Function)) {
-			throw new Error(`[Eat] TERM.orDynamic expects all arguments to be functions, but received a '${typeof func}'`)
-		}
-		
-		return (source, args = {without: []}) => {
-			const {without} = args
-			for (const func of funcs) {
-				if (without.includes(func)) continue
-				const result = func(source, args)
-				if (result.success) return result
+			const tailResult = TERM.many(term)(headResult.tail)
+			if (!tailResult.success) {
+				const {tail, source} = headResult
+				const child = [headResult]
+				return TERM.succeed({tail, source, term: self}, child)
 			}
-			return TERM.fail(source)
+			
+			const tail = tailResult.tail
+			const source = headResult.source + tailResult.source
+			const child = [headResult, ...tailResult.child]
+			return TERM.succeed({tail, source, term: self}, child)
 		}
+		self.term = term
+		return self
 	}
 	
-	TERM.without = (func, without, ...excess) => {
+	TERM.maybe = (term) => {
+		const self = (input) => {
+			const result = term(input)
+			const tail = result.tail
+			const source = result.source === undefined? "" : result.source
+			return TERM.succeed({tail, source, term: self}, result)
+		}
+		self.term = term
+		return self
+	}
 	
-		if (!func.is(Function)) throw new Error(`[Eat] TERM.without expects the first argument to be a function. Instead, received a '${typeof func}'`)
-		if (!without.is(Array.of(Function))) throw new Error(`[Eat] TERM.without expects the second argument to be an array of functions. Instead, received a '${without.dir}'`)
-		if (excess.length > 0) throw new Error(`[Eat] TERM.without expects 2 functions as arguments. Instead, received ${excess.length + 2} arguments`)
+	TERM.list = (terms) => {
+		const self = (input) => {
 		
-		return (source, args) => {
-			return func(source, {...args, without: [...args.without, ...without]})
-		}
-	}
-	
-	TERM.and = (...funcs) => {
-	
-		for (const func of funcs) if (!func.is(Function)) {
-			throw new Error(`[Eat] TERM.and expects all arguments to be functions, but received a '${typeof func}'`)
-		}
-	
-		return (source, args) => {
-			for (const func of funcs) {
-				const result = func(source, args)
-				if (!result.success) return TERM.fail(source)
+			const headResult = terms[0](input)
+			if (!headResult.success) {
+				const child = [headResult]
+				return TERM.fail({tail: input, term: self}, child)
 			}
-			return TERM.succeed(source)
+			
+			if (terms.length <= 1) {
+				const {tail, source} = headResult
+				const child = [headResult]
+				return TERM.succeed({tail, source, term: self}, child)
+			}
+			
+			const tailResult = TERM.list(terms.slice(1))(headResult.tail)
+			if (!tailResult.success) {
+				const source = headResult.source + (tailResult.source === undefined? "" : tailResult.source)
+				const child = [headResult, ...tailResult.child]
+				return TERM.fail({tail: input, source, term: self}, child)
+			}
+			
+			const tail = tailResult.tail
+			const source = headResult.source + tailResult.source
+			const child = [headResult, ...tailResult.child]
+			return TERM.succeed({tail, source, term: self}, child)
+			
+		}
+		self.terms = terms
+		return self
+	}
+	
+	TERM.or = (terms) => {
+		const self = (input) => {
+			const children = []
+			for (const term of terms) {
+				const result = term(input)
+				children.push(result)
+				if (result.success) {
+					const {tail, source} = result
+					return TERM.succeed({tail, source, term: self}, children)
+				}
+			}
+			return TERM.fail({tail: input, term: self}, children)
+		}
+		self.terms = terms
+		return self
+	}
+	
+	TERM.eof = TERM.endOfFile = (input) => {
+		if (input.length === 0) {
+			return TERM.succeed({term: TERM.eof, source: ""})
+		}
+		return TERM.fail({term: TERM.eof})
+	}
+	
+	//=======//
+	// Terms //
+	//=======//
+	TERM.without = function* (terms, term) {
+		for (const t of terms) {
+			if (t !== term) yield t
 		}
 	}
 	
-	TERM.not = (func) => (source, args) => {
-		const result = func(source, args)
-		if (result.success) return TERM.fail(source)
-		else return {...result, success: true}
-	}
-	
-	const referenceCache = {}
-	TERM.reference = (funcName) => {
-		if (referenceCache[funcName] != undefined) return referenceCache[funcName]
-		const func = (source, args) => TERM[funcName](source, args)
-		referenceCache[funcName] = func
+	TERM.cache = {}
+	TERM.term = (name) => {
+		if (TERM.cache[name] !== undefined) return TERM.cache[name]
+		
+		const func = (...args) => TERM[name](...args)
+		func._.terms.get = () => TERM[name] === undefined? undefined : TERM[name].terms
+		func._.term.get = () => TERM[name] === undefined? undefined : TERM[name].term
+		func._.func.get = () => TERM[name] === undefined? undefined : TERM[name].func
+		func._.regexp.get = () => TERM[name] === undefined? undefined : TERM[name].regexp
+		func._.string.get = () => TERM[name] === undefined? undefined : TERM[name].string
+		TERM.cache[name] = func
 		return func
 	}
-	TERM.ref = TERM.reference
-	
-	TERM.eof = TERM.endOfFile = (source) => ({success: source.length == 0, snippet: "", code: source})
 	
 	//====================//
 	// In-Built Functions //
@@ -1930,32 +1897,32 @@ TERM = {}
 	TERM.tab = TERM.string("	")
 	TERM.newline = TERM.newLine = TERM.string("\n")
 	
-	TERM.gap = TERM.many (
-		TERM.or (
+	TERM.gap = TERM.many(
+		TERM.or([
 			TERM.space,
 			TERM.tab,
-		)
+		])
 	)
 	
-	TERM.ws = TERM.whitespace = TERM.whiteSpace = TERM.many (
-		TERM.or (
+	TERM.ws = TERM.whitespace = TERM.whiteSpace = TERM.many(
+		TERM.or([
 			TERM.space,
 			TERM.tab,
 			TERM.newline,
-		)
+		])
 	)
 	
-	TERM.name = TERM.list (
+	TERM.name = TERM.list ([
 		TERM.regexp(/[a-zA-Z_$]/),
-		TERM.many(TERM.regex(/[a-zA-Z0-9_$]/))
-	)
+		TERM.many(TERM.regexp(/[a-zA-Z0-9_$]/))
+	])
 	
-	TERM.margin = TERM.or (
+	TERM.margin = TERM.or([
 		TERM.many(TERM.tab),
 		TERM.many(TERM.space),
-	)
+	])
 	
-	TERM.line = TERM.many(TERM.regex(/[^\n]/))
+	TERM.line = TERM.many(TERM.regexp(/[^\n]/))
 	
 }
 
