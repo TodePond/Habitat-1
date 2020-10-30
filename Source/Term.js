@@ -36,7 +36,8 @@ TERM = {}
 			if (success) {
 				const tail = input.slice(string.length)
 				const source = string
-				return TERM.succeed({tail, source, term: self})
+				const output = string
+				return TERM.succeed({tail, source, output, term: self})
 			}
 			return TERM.fail({tail: input, term: self})
 		}
@@ -53,7 +54,8 @@ TERM = {}
 				const success = fullRegex.test(source)
 				if (success) {
 					const tail = input.slice(source.length)
-					return TERM.succeed({tail, source, term: self})
+					const output = source
+					return TERM.succeed({tail, source, output, term: self})
 				}
 				i++
 			}
@@ -92,15 +94,22 @@ TERM = {}
 			
 			const tailResult = TERM.many(term)(headResult.tail)
 			if (!tailResult.success) {
-				const {tail, source} = headResult
+				const {tail, source, output} = headResult
 				const child = [headResult]
-				return TERM.succeed({tail, source, term: self}, child)
+				child.tail = tail
+				child.source = source
+				child.output = output
+				return TERM.succeed({tail, source, output, term: self}, child)
 			}
 			
 			const tail = tailResult.tail
-			const source = headResult.source + tailResult.source
+			const source = `${headResult.source}${tailResult.source}`
+			const output = `${headResult.output}${tailResult.output}`
 			const child = [headResult, ...tailResult.child]
-			return TERM.succeed({tail, source, term: self}, child)
+			child.source = source
+			child.tail = tail
+			child.output = output
+			return TERM.succeed({tail, source, output, term: self}, child)
 		}
 		self.term = term
 		return self
@@ -111,7 +120,8 @@ TERM = {}
 			const result = term(input)
 			const tail = result.tail
 			const source = result.source === undefined? "" : result.source
-			return TERM.succeed({tail, source, term: self}, result)
+			const output = result.output === undefined? "" : result.output
+			return TERM.succeed({tail, source, output, term: self}, result)
 		}
 		self.term = term
 		return self
@@ -176,9 +186,11 @@ TERM = {}
 	//=======//
 	// Terms //
 	//=======//
+	// THIS is totally broken
+	// Fix it after everything has a default output, cos it will be easier to fix then
 	TERM.without = function* (terms, term) {
 		for (const t of terms) {
-			if (t !== term) yield t
+			if (t !== term) yield t.d
 		}
 	}
 	
