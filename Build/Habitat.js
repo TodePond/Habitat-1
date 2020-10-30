@@ -1703,44 +1703,46 @@ TERM = {}
 	//======//
 	// Meta //
 	//======//
-	TERM.succeed = ({tail, source, output, term}, child) => ({
+	TERM.succeed = ({tail, source, output, term, args}, child) => ({
 		success: true,
 		tail,
 		source,
 		output,
 		term,
 		child,
+		args,
 	})
 	
-	TERM.fail = ({tail, source, output, term}, child) => ({
+	TERM.fail = ({tail, source, output, term, args}, child) => ({
 		success: false,
 		tail,
 		source,
 		output,
 		term,
 		child,
+		args,
 	})
 	
 	//===========//
 	// Primitive //
 	//===========//
 	TERM.string = (string) => {
-		const self = (input) => {
+		const self = (input, args) => {
 			const success = input.slice(0, string.length) == string
 			if (success) {
 				const tail = input.slice(string.length)
 				const source = string
 				const output = string
-				return TERM.succeed({tail, source, output, term: self})
+				return TERM.succeed({tail, source, output, args, term: self})
 			}
-			return TERM.fail({tail: input, term: self})
+			return TERM.fail({tail: input, args, term: self})
 		}
 		self.string = string
 		return self
 	}
 	
 	TERM.regexp = TERM.regExp = TERM.regex = TERM.regEx = (regexp) => {
-		const self = (input) => {
+		const self = (input, args) => {
 			const fullRegex = new RegExp("^" + regexp.source + "$")
 			let i = 0
 			while (i <= input.length) {
@@ -1749,11 +1751,11 @@ TERM = {}
 				if (success) {
 					const tail = input.slice(source.length)
 					const output = source
-					return TERM.succeed({tail, source, output, term: self})
+					return TERM.succeed({tail, source, args, output, term: self})
 				}
 				i++
 			}
-			return TERM.fail({tail: input, term: self})
+			return TERM.fail({tail: input, args, term: self})
 		}
 		self.regexp = regexp
 		return self
@@ -1763,14 +1765,14 @@ TERM = {}
 	// Control //
 	//=========//
 	TERM.emit = (term, func) => {
-		const self = (input) => {
-			const result = term(input)
+		const self = (input, args) => {
+			const result = term(input, args)
 			if (result.success) {
 				const {tail, source} = result
 				const output = result.child === undefined? func(result) : func(result.child)
-				return TERM.succeed({tail, source, output, term: self}, result)
+				return TERM.succeed({tail, source, args, output, term: self}, result)
 			}
-			return TERM.fail({tail: input, term: self})
+			return TERM.fail({tail: input, args, term: self})
 		}
 		self.term = term
 		self.func = func
@@ -1778,9 +1780,9 @@ TERM = {}
 	}
 	
 	TERM.many = (term) => {
-		const self = (input) => {
+		const self = (input, args) => {
 		
-			const headResult = term(input)
+			const headResult = term(input, args)
 			if (!headResult.success) {
 				const tail = input
 				const {source, output} = headResult
@@ -1789,10 +1791,10 @@ TERM = {}
 				child.term = self
 				child.output = output
 				child.source = source
-				return TERM.fail({tail, source, output, term: self}, child)
+				return TERM.fail({tail, source, args, output, term: self}, child)
 			}
 			
-			const tailResult = TERM.many(term)(headResult.tail)
+			const tailResult = TERM.many(term, args)(headResult.tail)
 			if (!tailResult.success) {
 				const {tail, source, output} = headResult
 				const child = [headResult]
@@ -1800,7 +1802,7 @@ TERM = {}
 				child.source = source
 				child.output = output
 				child.term = self
-				return TERM.succeed({tail, source, output, term: self}, child)
+				return TERM.succeed({tail, args, source, output, term: self}, child)
 			}
 			
 			const tail = tailResult.tail
@@ -1811,28 +1813,28 @@ TERM = {}
 			child.tail = tail
 			child.output = output
 			child.term = self
-			return TERM.succeed({tail, source, output, term: self}, child)
+			return TERM.succeed({tail, source, args, output, term: self}, child)
 		}
 		self.term = term
 		return self
 	}
 	
 	TERM.maybe = (term) => {
-		const self = (input) => {
-			const result = term(input)
+		const self = (input, args) => {
+			const result = term(input, args)
 			const tail = result.tail
 			const source = result.source === undefined? "" : result.source
 			const output = result.output === undefined? "" : result.output
-			return TERM.succeed({tail, source, output, term: self}, result)
+			return TERM.succeed({tail, source, args, output, term: self}, result)
 		}
 		self.term = term
 		return self
 	}
 	
 	TERM.list = (terms) => {
-		const self = (input) => {
+		const self = (input, args) => {
 		
-			const headResult = terms[0](input)
+			const headResult = terms[0](input, args)
 			if (!headResult.success) {
 				const tail = input
 				const {source, output} = headResult
@@ -1841,7 +1843,7 @@ TERM = {}
 				child.source = source
 				child.output = output
 				child.term = self
-				return TERM.fail({tail, source, output, term: self}, child)
+				return TERM.fail({tail, source, args, output, term: self}, child)
 			}
 			
 			if (terms.length <= 1) {
@@ -1851,10 +1853,10 @@ TERM = {}
 				child.source = source
 				child.output = output
 				child.term = self
-				return TERM.succeed({tail, source, output, term: self}, child)
+				return TERM.succeed({tail, source, args, output, term: self}, child)
 			}
 			
-			const tailResult = TERM.list(terms.slice(1))(headResult.tail)
+			const tailResult = TERM.list(terms.slice(1))(headResult.tail, args)
 			if (!tailResult.success) {
 				const tail = input
 				const source = headResult.source + (tailResult.source === undefined? "" : tailResult.source)
@@ -1864,7 +1866,7 @@ TERM = {}
 				child.term = self
 				child.tail = tail
 				child.output = output
-				return TERM.fail({tail, source, output, term: self}, child)
+				return TERM.fail({tail, source, args, output, term: self}, child)
 			}
 			
 			const tail = tailResult.tail
@@ -1875,7 +1877,7 @@ TERM = {}
 			child.source = source
 			child.output = output
 			child.term = self
-			return TERM.succeed({tail, source, output, term: self}, child)
+			return TERM.succeed({tail, source, args, output, term: self}, child)
 			
 		}
 		self.terms = terms
@@ -1883,11 +1885,12 @@ TERM = {}
 	}
 	
 	TERM.or = (terms) => {
-		const self = (input, exception = {}) => {
+		const self = (input, args = {exceptions: []}) => {
 			const children = []
+			const {exceptions} = args
 			for (const term of terms) {
-				if (term === exception) continue
-				const result = term(input)
+				if (exceptions.includes(term)) continue
+				const result = term(input, args)
 				children.push(result)
 				if (result.success) {
 					const {tail, source, output} = result
@@ -1895,28 +1898,28 @@ TERM = {}
 					children.source = source
 					children.output = output
 					children.term = self
-					return TERM.succeed({tail, source, output, term: self}, children)
+					return TERM.succeed({tail, args, source, output, term: self}, children)
 				}
 			}
 			children.term = self
 			children.source = undefined
 			children.output = undefined
 			children.tail = input
-			return TERM.fail({tail: input, term: self}, children)
+			return TERM.fail({tail: input, args, term: self}, children)
 		}
 		self.terms = terms
 		return self
 	}
 	
-	TERM.eof = TERM.endOfFile = (input) => {
+	TERM.eof = TERM.endOfFile = (input, args) => {
 		if (input.length === 0) {
-			return TERM.succeed({term: TERM.eof, source: "", output: ""})
+			return TERM.succeed({term: TERM.eof, args, source: "", output: ""})
 		}
-		return TERM.fail({term: TERM.eof})
+		return TERM.fail({term: TERM.eof, args})
 	}
 	
 	TERM.orExcept = (orTerm, exception) => {
-		return (input) => orTerm(input, exception)
+		return (input, args = {}) => orTerm(input, {...args, exceptions: [...args.exceptions, exception]})
 	}
 	
 	//=======//
