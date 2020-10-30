@@ -173,7 +173,7 @@ TERM.NumberWord = TERM.emit(
 			])
 		)
 	]),
-	([int, decimal]) => int.output + (!(decimal.child.success)? "" : "." + decimal.child.child[1].child.map(d => d.child[1].child[1].output).join("")), 
+	([int, decimal]) => int.output + (!(decimal.child.success)? "" : "." + decimal.child.child[1].child.map(d => d.child[1].child.last.output).join("")), 
 )
 
 TERM.HundredsWord = TERM.emit(
