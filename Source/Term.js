@@ -189,9 +189,10 @@ TERM = {}
 	}
 	
 	TERM.or = (terms) => {
-		const self = (input) => {
+		const self = (input, exception = {}) => {
 			const children = []
 			for (const term of terms) {
+				if (term === exception) continue
 				const result = term(input)
 				children.push(result)
 				if (result.success) {
@@ -220,17 +221,13 @@ TERM = {}
 		return TERM.fail({term: TERM.eof})
 	}
 	
-	//=======//
-	// Terms //
-	//=======//
-	// THIS is totally broken
-	// Fix it after everything has a default output, cos it will be easier to fix then
-	TERM.without = function* (terms, term) {
-		for (const t of terms) {
-			if (t !== term) yield t.d
-		}
+	TERM.orExcept = (orTerm, exception) => {
+		return (input) => orTerm(input, exception)
 	}
 	
+	//=======//
+	// Terms //
+	//=======//	
 	TERM.cache = {}
 	TERM.term = (name) => {
 		if (TERM.cache[name] !== undefined) return TERM.cache[name]
@@ -241,6 +238,7 @@ TERM = {}
 		func._.func.get = () => TERM[name] === undefined? undefined : TERM[name].func
 		func._.regexp.get = () => TERM[name] === undefined? undefined : TERM[name].regexp
 		func._.string.get = () => TERM[name] === undefined? undefined : TERM[name].string
+		func._.ref.get = () => TERM[name]
 		TERM.cache[name] = func
 		return func
 	}

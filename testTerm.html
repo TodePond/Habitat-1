@@ -73,23 +73,25 @@ TERM.Greeting = TERM.list([
 TERM.Greeting("greet wdorld").d
 TERM.Greeting("greet world").d
 */
-
+/*
 TERM.or([
 	TERM.string("hello"),
 	TERM.string("hi"),
 ])("hsi").d
-
+*/
 /*
+TERM.Bop = TERM.orExcept(TERM.term("Number"), TERM.term("Six"))
 TERM.Three = TERM.string("3")
 TERM.Six = TERM.string("6")
 TERM.SixtySeven = TERM.string("67")
 TERM.Number = TERM.or([
-	TERM.Three,
-	TERM.Six,
-	TERM.SixtySeven,
+	TERM.term("Three"),
+	TERM.term("Six"),
+	TERM.term("SixtySeven"),
 ])
+
 TERM.Number("67").d
-TERM.or(TERM.without(TERM.Number.terms, TERM.Six))("67").d
+TERM.Bop("67").d
 */
 /*
 TERM.YoYo = TERM.many(TERM.term("Yo"))
