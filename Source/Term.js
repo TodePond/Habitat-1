@@ -221,9 +221,7 @@ TERM = {}
 		return TERM.fail({term: TERM.eof})
 	}
 	
-	TERM.orExcept = (orTerm, exception) => {
-		return (input) => orTerm(input, exception)
-	}
+	TERM.orExcept = (orTerm, exception) => (input) => orTerm(input, exception)
 	
 	//=======//
 	// Terms //
