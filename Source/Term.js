@@ -88,7 +88,13 @@ TERM = {}
 		
 			const headResult = term(input)
 			if (!headResult.success) {
+				const tail = input
+				const {source, output} = headResult
 				const child = [headResult]
+				child.tail = input
+				child.term = self
+				child.output = output
+				child.source = source
 				return TERM.fail({tail: input, term: self}, child)
 			}
 			
@@ -99,6 +105,7 @@ TERM = {}
 				child.tail = tail
 				child.source = source
 				child.output = output
+				child.term = self
 				return TERM.succeed({tail, source, output, term: self}, child)
 			}
 			
@@ -109,6 +116,7 @@ TERM = {}
 			child.source = source
 			child.tail = tail
 			child.output = output
+			child.term = self
 			return TERM.succeed({tail, source, output, term: self}, child)
 		}
 		self.term = term
