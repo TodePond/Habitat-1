@@ -1770,6 +1770,7 @@ TERM = {}
 			if (result.success) {
 				const {tail, source} = result
 				const output = result.child === undefined? func(result) : func(result.child)
+				result.output = output
 				return TERM.succeed({tail, source, args, output, term: self}, result)
 			}
 			return TERM.fail({tail: input, args, term: self})
