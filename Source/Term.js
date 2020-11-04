@@ -31,7 +31,7 @@ TERM = {}
 	
 	//===========//
 	// Primitive //
-	//===========//
+	//===========//	
 	TERM.string = (string) => {
 		const self = (input, args) => {
 			const success = input.slice(0, string.length) == string
@@ -250,6 +250,7 @@ TERM = {}
 	//====================//
 	// In-Built Functions //
 	//====================//
+	TERM.anything = TERM.string("")
 	TERM.space = TERM.string(" ")
 	TERM.tab = TERM.string("	")
 	TERM.newline = TERM.newLine = TERM.string("\n")
