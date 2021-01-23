@@ -1,4 +1,4 @@
-<img align="right" height="100" src="http://todepond.com/IMG/frogasaurus.jpg">
+<img align="right" height="100" src="http://todepond.com/IMG/RibbitTode.png">
 
 # Habitat
 Habitat is a collection of javascript libraries.<br>
