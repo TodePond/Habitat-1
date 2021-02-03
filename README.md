@@ -6,7 +6,7 @@ Here are a few of its features.
 
 
 # Properties
-Edit property definitions with the underscore (`_`) proxy.
+Edit property definitions with the underscore (`_`) proxy. 
 ```js
 luke._.fullName.get = (self) => `${self.firstName} ${self.lastName}`
 
