@@ -1,5 +1,7 @@
 <img align="right" height="100" src="http://todepond.com/IMG/RibbitTode.png">
 
+# This is an outdated version of the Habitat library. I keep it here because some of my older projects still use it. The new version is here: [github.com/l2wilson94/Habitat](https://github.com/l2wilson94/Habitat)
+
 # Habitat
 Habitat is a collection of javascript libraries.<br>
 Here are a few of its features.
